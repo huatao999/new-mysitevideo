@@ -80,7 +80,7 @@ export async function GET(req: Request) {
             return null;
           }
           
-          const localeData = obj.metadata.locales[locale];
+          const localeData = obj.metadata?.locales?.['en'] || {};
           // 严格检查：该语言必须有标题且标题不为空字符串
           // 如果该语言没有标题或标题为空，说明该视频不属于该语言，跳过
           if (!localeData || !localeData.title || localeData.title.trim() === "") {
