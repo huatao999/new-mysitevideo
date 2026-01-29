@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       return Response.json({error: "Invalid query", details: parsed.error.flatten()}, {status: 400});
     }
     
-    const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL);
+    const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!);
     const videoObjects = await response.json();
 
     // const {prefix, title, maxKeys, continuationToken, locale} = parsed.data;
