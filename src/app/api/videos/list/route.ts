@@ -56,7 +56,7 @@ export async function GET(req: Request) {
     // const videoObjects = (response.Contents || []).filter((obj) => obj.Key && isVideoFile(obj.Key));
 
     // 获取所有视频的元数据
-    const videoKeys = videoObjects.map((obj) => obj.Key!);
+    const videoKeys = videoObjects.map((obj: any) => obj?.key);
     const metadataMap = await getVideoMetadataBatch(videoKeys);
     
     // eslint-disable-next-line no-console
