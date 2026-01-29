@@ -71,7 +71,7 @@ export async function GET(req: Request) {
     let videos = videoObjects
       .map((obj: any) => {
         const key = obj?.Key!;
-        const metadata = metadataMap.get(key);
+        const metadata = obj.metadata;
 
         // 如果指定了语言过滤，必须严格检查该语言是否有有效的元数据
         if (locale) {
