@@ -74,13 +74,13 @@ export async function GET(req: Request) {
         const metadata = obj.metadata;
 
         // 如果指定了语言过滤，必须严格检查该语言是否有有效的元数据
-        if (locale) {
+        if (obj.locale) {
           // 如果没有元数据，跳过该视频
-          if (!metadata) {
+          if (!obj.metadata) {
             return null;
           }
           
-          const localeData = metadata.locales[locale];
+          const localeData = obj.metadata.locales[locale];
           // 严格检查：该语言必须有标题且标题不为空字符串
           // 如果该语言没有标题或标题为空，说明该视频不属于该语言，跳过
           if (!localeData || !localeData.title || localeData.title.trim() === "") {
@@ -97,7 +97,7 @@ export async function GET(req: Request) {
 
         if (locale) {
           // 如果指定了语言，必须使用该语言的元数据
-          localeData = metadata?.locales[locale];
+          localeData =  obj.metadata?.locales[locale];
           // 如果指定了语言但没有该语言的元数据，跳过
           if (!localeData || !localeData.title || localeData.title.trim() === "") {
             return null;
@@ -110,12 +110,12 @@ export async function GET(req: Request) {
           if (metadata) {
             // 找到第一个有标题的语言
             const firstLocaleWithTitle = locales.find((loc) => {
-              const locData = metadata.locales[loc];
+              const locData = obj.metadata.locales[loc];
               return locData && locData.title && locData.title.trim() !== "";
             });
             
             if (firstLocaleWithTitle) {
-              localeData = metadata.locales[firstLocaleWithTitle];
+              localeData = obj.metadata.locales[firstLocaleWithTitle];
               displayTitle = localeData.title;
               displayDescription = localeData.description || "";
               displayCoverUrl = localeData.coverUrl;
