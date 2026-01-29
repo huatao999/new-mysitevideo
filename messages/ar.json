@@ -1,0 +1,48 @@
+{
+  "home": {
+    "title": "موقع فيديو H5 عالمي",
+    "subtitle": "Next.js + Cloudflare R2/CDN (هيكل أساسي)",
+    "playerNote": "تكامل إعلان VAST محجوز (ExoClick / Adsterra)."
+  },
+  "videos": {
+    "title": "مكتبة الفيديو",
+    "subtitle": "تصفح جميع مقاطع الفيديو المتاحة",
+    "searchPlaceholder": "البحث عن مقاطع الفيديو (حسب بادئة اسم الملف)",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "noVideos": "لم يتم العثور على مقاطع فيديو",
+    "loadMore": "تحميل المزيد",
+    "backToList": "العودة إلى القائمة"
+  },
+  "navigation": {
+    "home": "الرئيسية",
+    "videos": "مقاطع الفيديو"
+  },
+  "player": {
+    "playbackSpeed": "سرعة التشغيل",
+    "normal": "عادي",
+    "speed125": "1.25x",
+    "speed15": "1.5x",
+    "speed2": "2x"
+  },
+  "video": {
+    "like": "إعجاب",
+    "unlike": "إلغاء الإعجاب",
+    "comments": "التعليقات",
+    "addComment": "إضافة تعليق",
+    "username": "اسم المستخدم",
+    "optional": "اختياري",
+    "usernamePlaceholder": "اسمك (اختياري)",
+    "comment": "تعليق",
+    "commentPlaceholder": "اكتب تعليقك هنا...",
+    "submit": "إرسال",
+    "submitting": "جاري الإرسال...",
+    "cancel": "إلغاء",
+    "loadingComments": "جاري تحميل التعليقات...",
+    "noComments": "لا توجد تعليقات بعد. كن أول من يعلق!",
+    "justNow": "الآن",
+    "minutesAgo": "منذ {count} دقيقة",
+    "hoursAgo": "منذ {count} ساعة",
+    "daysAgo": "منذ {count} يوم"
+  }
+}

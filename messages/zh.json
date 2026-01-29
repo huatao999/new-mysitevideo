@@ -1,0 +1,49 @@
+{
+  "home": {
+    "title": "全球化 H5 视频站",
+    "subtitle": "Next.js + Cloudflare R2/CDN（骨架已搭好）",
+    "playerNote": "已预留 VAST 广告接口（ExoClick / Adsterra）。"
+  },
+  "videos": {
+    "title": "视频列表",
+    "subtitle": "浏览所有可用视频",
+    "searchPlaceholder": "搜索视频（按文件名前缀）",
+    "search": "搜索",
+    "loading": "加载中...",
+    "noVideos": "暂无视频",
+    "loadMore": "加载更多",
+    "backToList": "返回列表"
+  },
+  "navigation": {
+    "home": "首页",
+    "videos": "视频库"
+  },
+  "player": {
+    "playbackSpeed": "播放速度",
+    "normal": "正常",
+    "speed125": "1.25倍",
+    "speed15": "1.5倍",
+    "speed2": "2倍"
+  },
+  "video": {
+    "like": "点赞",
+    "unlike": "取消点赞",
+    "comments": "评论",
+    "addComment": "添加评论",
+    "username": "用户名",
+    "optional": "可选",
+    "usernamePlaceholder": "您的名字（可选）",
+    "comment": "评论",
+    "commentPlaceholder": "在这里写下您的评论...",
+    "submit": "提交",
+    "submitting": "提交中...",
+    "cancel": "取消",
+    "loadingComments": "加载评论中...",
+    "noComments": "暂无评论。成为第一个评论的人吧！",
+    "justNow": "刚刚",
+    "minutesAgo": "{count} 分钟前",
+    "hoursAgo": "{count} 小时前",
+    "daysAgo": "{count} 天前"
+  }
+}
+

@@ -1,0 +1,48 @@
+{
+  "home": {
+    "title": "グローバル H5 動画サイト",
+    "subtitle": "Next.js + Cloudflare R2/CDN (基本構造)",
+    "playerNote": "VAST広告統合予約済み (ExoClick / Adsterra)。"
+  },
+  "videos": {
+    "title": "動画ライブラリ",
+    "subtitle": "利用可能なすべての動画を閲覧",
+    "searchPlaceholder": "動画を検索（ファイル名のプレフィックスで）",
+    "search": "検索",
+    "loading": "読み込み中...",
+    "noVideos": "動画が見つかりません",
+    "loadMore": "さらに読み込む",
+    "backToList": "リストに戻る"
+  },
+  "navigation": {
+    "home": "ホーム",
+    "videos": "動画"
+  },
+  "player": {
+    "playbackSpeed": "再生速度",
+    "normal": "通常",
+    "speed125": "1.25倍",
+    "speed15": "1.5倍",
+    "speed2": "2倍"
+  },
+  "video": {
+    "like": "いいね",
+    "unlike": "いいねを取り消す",
+    "comments": "コメント",
+    "addComment": "コメントを追加",
+    "username": "ユーザー名",
+    "optional": "任意",
+    "usernamePlaceholder": "お名前（任意）",
+    "comment": "コメント",
+    "commentPlaceholder": "コメントを入力してください...",
+    "submit": "送信",
+    "submitting": "送信中...",
+    "cancel": "キャンセル",
+    "loadingComments": "コメントを読み込み中...",
+    "noComments": "まだコメントがありません。最初のコメントを書きましょう！",
+    "justNow": "たった今",
+    "minutesAgo": "{count}分前",
+    "hoursAgo": "{count}時間前",
+    "daysAgo": "{count}日前"
+  }
+}

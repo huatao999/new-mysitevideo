@@ -1,0 +1,49 @@
+{
+  "home": {
+    "title": "Global H5 Video Site",
+    "subtitle": "Next.js + Cloudflare R2/CDN (skeleton)",
+    "playerNote": "VAST ad integration is reserved (ExoClick / Adsterra)."
+  },
+  "videos": {
+    "title": "Video Library",
+    "subtitle": "Browse all available videos",
+    "searchPlaceholder": "Search videos (by filename prefix)",
+    "search": "Search",
+    "loading": "Loading...",
+    "noVideos": "No videos found",
+    "loadMore": "Load More",
+    "backToList": "Back to List"
+  },
+  "navigation": {
+    "home": "Home",
+    "videos": "Videos"
+  },
+  "player": {
+    "playbackSpeed": "Playback Speed",
+    "normal": "Normal",
+    "speed125": "1.25x",
+    "speed15": "1.5x",
+    "speed2": "2x"
+  },
+  "video": {
+    "like": "Like",
+    "unlike": "Unlike",
+    "comments": "Comments",
+    "addComment": "Add Comment",
+    "username": "Username",
+    "optional": "Optional",
+    "usernamePlaceholder": "Your name (optional)",
+    "comment": "Comment",
+    "commentPlaceholder": "Write your comment here...",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "cancel": "Cancel",
+    "loadingComments": "Loading comments...",
+    "noComments": "No comments yet. Be the first to comment!",
+    "justNow": "Just now",
+    "minutesAgo": "{count} minute ago",
+    "hoursAgo": "{count} hour ago",
+    "daysAgo": "{count} day ago"
+  }
+}
+

@@ -1,0 +1,48 @@
+{
+  "home": {
+    "title": "글로벌 H5 비디오 사이트",
+    "subtitle": "Next.js + Cloudflare R2/CDN (기본 구조)",
+    "playerNote": "VAST 광고 통합 예약됨 (ExoClick / Adsterra)."
+  },
+  "videos": {
+    "title": "비디오 라이브러리",
+    "subtitle": "사용 가능한 모든 비디오 탐색",
+    "searchPlaceholder": "비디오 검색 (파일명 접두사로)",
+    "search": "검색",
+    "loading": "로딩 중...",
+    "noVideos": "비디오를 찾을 수 없습니다",
+    "loadMore": "더 보기",
+    "backToList": "목록으로 돌아가기"
+  },
+  "navigation": {
+    "home": "홈",
+    "videos": "비디오"
+  },
+  "player": {
+    "playbackSpeed": "재생 속도",
+    "normal": "정상",
+    "speed125": "1.25x",
+    "speed15": "1.5x",
+    "speed2": "2x"
+  },
+  "video": {
+    "like": "좋아요",
+    "unlike": "좋아요 취소",
+    "comments": "댓글",
+    "addComment": "댓글 추가",
+    "username": "사용자 이름",
+    "optional": "선택사항",
+    "usernamePlaceholder": "이름 (선택사항)",
+    "comment": "댓글",
+    "commentPlaceholder": "댓글을 작성하세요...",
+    "submit": "제출",
+    "submitting": "제출 중...",
+    "cancel": "취소",
+    "loadingComments": "댓글 로딩 중...",
+    "noComments": "아직 댓글이 없습니다. 첫 번째 댓글을 작성해보세요!",
+    "justNow": "방금",
+    "minutesAgo": "{count}분 전",
+    "hoursAgo": "{count}시간 전",
+    "daysAgo": "{count}일 전"
+  }
+}

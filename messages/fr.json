@@ -1,0 +1,48 @@
+{
+  "home": {
+    "title": "Site vidéo H5 global",
+    "subtitle": "Next.js + Cloudflare R2/CDN (structure de base)",
+    "playerNote": "Intégration publicitaire VAST réservée (ExoClick / Adsterra)."
+  },
+  "videos": {
+    "title": "Bibliothèque vidéo",
+    "subtitle": "Parcourir toutes les vidéos disponibles",
+    "searchPlaceholder": "Rechercher des vidéos (par préfixe de nom de fichier)",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "noVideos": "Aucune vidéo trouvée",
+    "loadMore": "Charger plus",
+    "backToList": "Retour à la liste"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "videos": "Vidéos"
+  },
+  "player": {
+    "playbackSpeed": "Vitesse de lecture",
+    "normal": "Normal",
+    "speed125": "1.25x",
+    "speed15": "1.5x",
+    "speed2": "2x"
+  },
+  "video": {
+    "like": "J'aime",
+    "unlike": "Je n'aime plus",
+    "comments": "Commentaires",
+    "addComment": "Ajouter un commentaire",
+    "username": "Nom d'utilisateur",
+    "optional": "Optionnel",
+    "usernamePlaceholder": "Votre nom (optionnel)",
+    "comment": "Commentaire",
+    "commentPlaceholder": "Écrivez votre commentaire ici...",
+    "submit": "Envoyer",
+    "submitting": "Envoi en cours...",
+    "cancel": "Annuler",
+    "loadingComments": "Chargement des commentaires...",
+    "noComments": "Aucun commentaire pour le moment. Soyez le premier à commenter !",
+    "justNow": "À l'instant",
+    "minutesAgo": "Il y a {count} minute",
+    "hoursAgo": "Il y a {count} heure",
+    "daysAgo": "Il y a {count} jour"
+  }
+}
