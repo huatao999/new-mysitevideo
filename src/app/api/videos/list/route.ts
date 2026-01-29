@@ -69,7 +69,7 @@ export async function GET(req: Request) {
 
     // Format response with metadata
     let videos = videoObjects
-      .map((obj) => {
+      .map((obj: any) => {
         const key = obj.Key!;
         const metadata = metadataMap.get(key);
 
