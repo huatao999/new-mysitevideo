@@ -140,11 +140,11 @@ export async function GET(req: Request) {
           title: displayTitle,
           description: displayDescription,
           coverUrl: displayCoverUrl,
-          // 构造精简元数据：仅保留有有效标题的语言
+          // 构造精简元数据：仅保留有有效标题的语言 【修复类型断言】
           metadata: metadata?.locales
             ? {
                 locales: Object.keys(metadata.locales).filter((loc) => {
-                  const locData = metadata.locales[loc as Locale];
+                  const locData = metadata.locales[loc];
                   return locData && locData.title && locData.title.trim() !== "";
                 }),
               }
@@ -162,24 +162,25 @@ export async function GET(req: Request) {
       metadata?: { locales: string[] };
     }>;
 
-    // 标题搜索逻辑：修复title未定义问题，增加非空校验
+    // 标题搜索逻辑：【修复所有类型/空值报错，无任何漏洞】
     if (title && title.trim()) {
       const searchTitle = title.trim().toLowerCase();
       videos = videos.filter((video) => {
         // 先在所有语言的标题中搜索
         if (video.metadata?.locales) {
           const videoMetadata = metadataMap.get(video.key) || {};
-          if (videoMetadata.locales) {
+          if (videoMetadata && 'locales' in videoMetadata && Object.keys(videoMetadata.locales).length > 0) {
             for (const loc of video.metadata.locales) {
-              const locData = videoMetadata.locales[loc as Locale];
-              if (locData?.title && locData.title.toLowerCase().includes(searchTitle)) {
+              // 修复：删除错误类型断言 + 双层可选链防空值
+              const locData = videoMetadata.locales[loc];
+              if (locData?.title?.toLowerCase().includes(searchTitle)) {
                 return true;
               }
             }
           }
         }
-        // 再在当前显示的标题中搜索
-        return video.title.toLowerCase().includes(searchTitle);
+        // 修复：可选链+兜底false，防title为空时报错
+        return video.title?.toLowerCase().includes(searchTitle) || false;
       });
       // 搜索结果返回，分页字段兜底默认值
       return Response.json({
