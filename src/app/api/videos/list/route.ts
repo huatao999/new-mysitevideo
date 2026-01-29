@@ -32,25 +32,28 @@ export async function GET(req: Request) {
     if (!parsed.success) {
       return Response.json({error: "Invalid query", details: parsed.error.flatten()}, {status: 400});
     }
+    
+    const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL);
+    const videoObjects = await response.json();
 
-    const {prefix, title, maxKeys, continuationToken, locale} = parsed.data;
-    const client = getR2Client();
+    // const {prefix, title, maxKeys, continuationToken, locale} = parsed.data;
+    // const client = getR2Client();
 
-    // 如果使用标题搜索，需要获取更多视频以便正确过滤和分页
-    // 因为标题搜索是在内存中进行的，我们需要获取更多数据
-    const fetchMaxKeys = title && title.trim() ? Math.max(maxKeys * 3, 150) : maxKeys;
+    // // 如果使用标题搜索，需要获取更多视频以便正确过滤和分页
+    // // 因为标题搜索是在内存中进行的，我们需要获取更多数据
+    // const fetchMaxKeys = title && title.trim() ? Math.max(maxKeys * 3, 150) : maxKeys;
 
-    const command = new ListObjectsV2Command({
-      Bucket: env.R2_BUCKET,
-      Prefix: prefix,
-      MaxKeys: fetchMaxKeys,
-      ContinuationToken: continuationToken,
-    });
+    // const command = new ListObjectsV2Command({
+    //   Bucket: env.R2_BUCKET,
+    //   Prefix: prefix,
+    //   MaxKeys: fetchMaxKeys,
+    //   ContinuationToken: continuationToken,
+    // });
 
-    const response = await client.send(command);
+    // const response = await client.send(command);
 
-    // Filter video files
-    const videoObjects = (response.Contents || []).filter((obj) => obj.Key && isVideoFile(obj.Key));
+    // // Filter video files
+    // const videoObjects = (response.Contents || []).filter((obj) => obj.Key && isVideoFile(obj.Key));
 
     // 获取所有视频的元数据
     const videoKeys = videoObjects.map((obj) => obj.Key!);
