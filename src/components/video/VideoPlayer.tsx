@@ -152,7 +152,7 @@ export default function VideoPlayer({src, poster, vastTagUrl, enableAds}: VideoP
             muted: false,
             playsinline: true,
             poster,
-            sources: process.env.REACT_APP_VIDEO_URLS?.split(',').map(url => ({ src: url, type: 'video/mp4' })) || [],
+            sources: [{src: "https://dbf131d995463d2737b34d530a5585f0.r2.cloudflarestorage.com/my-video-site/ep1.mp4", type: "video/mp4"}],
             playbackRates: PLAYBACK_SPEEDS.map((s) => s.value),
             // 移动端优化
             responsive: true,
