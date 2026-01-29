@@ -162,24 +162,24 @@ export async function GET(req: Request) {
       metadata?: { locales: string[] };
     }>;
 
-    // 标题搜索逻辑：【修复所有类型/空值报错，无任何漏洞】
+    // 标题搜索逻辑：【终极修复172行Object.keys类型报错，所有问题全解决】
     if (title && title.trim()) {
       const searchTitle = title.trim().toLowerCase();
       videos = videos.filter((video) => {
         // 先在所有语言的标题中搜索
         if (video.metadata?.locales) {
-          const videoMetadata = metadataMap.get(video.key) || {};
-          if (videoMetadata && 'locales' in videoMetadata && Object.keys(videoMetadata.locales).length > 0) {
+          const videoMetadata = metadataMap.get(video.key) as { locales?: Record<string, { title?: string }> } || {};
+          // 严格类型校验：先判断locales存在且为对象，再执行后续逻辑
+          if (videoMetadata.locales && typeof videoMetadata.locales === 'object' && !Array.isArray(videoMetadata.locales)) {
             for (const loc of video.metadata.locales) {
-              // 修复：删除错误类型断言 + 双层可选链防空值
-              const locData = videoMetadata.locales[loc];
+              const locData = videoMetadata.locales![loc];
               if (locData?.title?.toLowerCase().includes(searchTitle)) {
                 return true;
               }
             }
           }
         }
-        // 修复：可选链+兜底false，防title为空时报错
+        // 可选链+兜底false，彻底防空值
         return video.title?.toLowerCase().includes(searchTitle) || false;
       });
       // 搜索结果返回，分页字段兜底默认值
