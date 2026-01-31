@@ -1,7 +1,7 @@
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+// import { ListObjectsV2Command } from "@aws-sdk/client-s3"; // 可以移除，因为未使用
+// import { getR2Client } from "@/lib/r2/client"; // 可以移除，因为未使用
 import { z } from "zod";
-import { env } from "@/lib/env";
-import { getR2Client } from "@/lib/r2/client";
+// import { env } from "@/lib/env"; // 不再需要
 import { getVideoMetadataBatch } from "@/lib/video-metadata/store";
 import { locales, type Locale } from "@/i18n/locales";
 
@@ -29,11 +29,8 @@ function isVideoFile(key: string): boolean {
 
 export async function GET(req: Request) {
   try {
-    // 校验环境变量，缺失直接返回500
-    if (!env.R2_BUCKET) {
-      return Response.json({ error: "R2_BUCKET missing" }, { status: 500 });
-    }
     // 校验API地址环境变量，缺失直接返回500
+    // 移除了对 env.R2_BUCKET 的校验，因为当前逻辑不需要它
     if (!process.env.NEXT_PUBLIC_VIDEO_API_URL) {
       return Response.json({ error: "NEXT_PUBLIC_VIDEO_API_URL missing" }, { status: 500 });
     }
@@ -104,7 +101,7 @@ export async function GET(req: Request) {
           localeData = metadata.locales?.[locale] || {};
           // 无有效标题则过滤掉该视频
           if (!localeData.title || localeData.title.trim() === "") {
-            return null;
+            return null; // This video will be filtered out later
           }
           displayTitle = localeData.title.trim();
           displayDescription = localeData.description?.trim() || "";
@@ -160,7 +157,7 @@ export async function GET(req: Request) {
       description: string;
       coverUrl?: string;
       metadata?: { locales: string[] };
-    }>;
+    >;
 
     // 标题搜索逻辑：【终极修复172行Object.keys类型报错，所有问题全解决】
     if (title && title.trim()) {
