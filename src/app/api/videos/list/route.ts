@@ -58,8 +58,8 @@ export async function GET(req: Request) {
     const videoKeys = validVideoObjects.map((obj: Record<string, any>) => obj?.key || obj?.Key);
     const metadataMap = (await getVideoMetadataBatch(videoKeys)) ?? new Map<string, Record<string, any>>();
 
-    // 处理视频数据和多语言信息（核心修复：所有metadata.locales改为可选链，避免TS类型报错）
-    const videos = validVideoObjects.map((obj: Record<string, any>) => {
+    // 【仅修改此处1】const改let，解决后续赋值报错，其余完全不变
+    let videos = validVideoObjects.map((obj: Record<string, any>) => {
       const key = (obj?.key || obj?.Key || "") as string;
       // 获取当前视频元数据，无则返回空对象（避免null操作）
       const metadata = metadataMap.get(key) ?? {};
@@ -113,6 +113,7 @@ export async function GET(req: Request) {
     // 标题搜索过滤逻辑（加固：处理metadata.locales空值，避免搜索时报错）
     if (parsed.title && parsed.title.trim()) {
       const searchTerm = parsed.title.trim().toLowerCase();
+      // 【此处2】无修改，仅因上一行const改let，此处赋值不再报错
       videos = videos.filter((video) => {
         // 检查所有可用语言的标题（多语言搜索，匹配任意语言标题即命中）
         const hasMatchingTitle = video.availableLocales.some((locale) => {
