@@ -188,7 +188,7 @@ export async function GET(req: Request) {
         video.title.toLowerCase().includes(searchTitle) ||
         video.description?.toLowerCase().includes(searchTitle) ||
         video.availableLocales.some(loc => {
-          const meta = metadataMap.get(video.key)?.locales?.[loc];
+          const meta = metadataMap.get(video.key)?.locales?.[loc as Locale];
           return meta?.title?.toLowerCase().includes(searchTitle) || 
                  meta?.description?.toLowerCase().includes(searchTitle);
         })
