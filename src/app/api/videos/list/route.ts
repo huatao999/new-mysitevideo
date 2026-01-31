@@ -1,23 +1,25 @@
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { z } from "zod";
 import { env } from "@/lib/env";
+import { getR2Client } from "@/lib/r2/client";
 import { getVideoMetadataBatch } from "@/lib/video-metadata/store";
 import { locales, type Locale } from "@/i18n/locales";
 
 const querySchema = z.object({
   prefix: z.string().optional(),
-  title: z.string().optional(),
+  title: z.string().optional(), // 按视频标题搜索
   maxKeys: z.coerce.number().int().min(1).max(1000).default(100),
   continuationToken: z.string().optional(),
-  locale: z.enum([...locales] as [Locale, ...Locale[]]).optional(),
+  locale: z.enum([...locales] as [Locale, ...Locale[]]).optional(), // 语言过滤
 });
 
-// 视频格式校验数组
+// 视频文件后缀白名单
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".ogg", ".mov", ".avi", ".mkv", ".m3u8"];
 
 /**
  * 校验是否为有效视频文件
- * @param key 文件路径/名称
- * @returns 是否为视频文件
+ * @param key 视频文件key/路径
+ * @returns 布尔值
  */
 function isVideoFile(key: string): boolean {
   if (!key) return false;
@@ -27,124 +29,183 @@ function isVideoFile(key: string): boolean {
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const parsed = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
-
-    // 校验Cloudflare Worker接口地址（避免空值请求）
+    // 校验环境变量，缺失直接返回500
+    if (!env.R2_BUCKET) {
+      return Response.json({ error: "R2_BUCKET missing" }, { status: 500 });
+    }
+    // 校验API地址环境变量，缺失直接返回500
     if (!process.env.NEXT_PUBLIC_VIDEO_API_URL) {
-      throw new Error("视频接口地址未配置：NEXT_PUBLIC_VIDEO_API_URL");
+      return Response.json({ error: "NEXT_PUBLIC_VIDEO_API_URL missing" }, { status: 500 });
     }
 
-    // 从Cloudflare Worker获取视频列表
-    const workerResponse = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
+    // 解析并校验URL查询参数
+    const url = new URL(req.url);
+    const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
+    if (!parsed.success) {
+      return Response.json(
+        { error: "Invalid query", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    // 核心修复1：解构查询参数，解决locale/title/maxKeys等未定义问题
+    const { title, locale } = parsed.data;
+
+    // 调用外部API获取视频列表，增加响应校验
+    const apiResponse = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL);
+    if (!apiResponse.ok) {
+      return Response.json(
+        { error: "Failed to fetch video list", status: apiResponse.status },
+        { status: 500 }
+      );
+    }
+    const videoObjects = await apiResponse.json();
+    // 校验返回数据是否为数组，非数组直接返回空列表
+    if (!Array.isArray(videoObjects)) {
+      return Response.json({ videos: [], isTruncated: false, nextContinuationToken: null, keyCount: 0 });
+    }
+
+    // 核心修复2：兼容key/Key字段，过滤无效视频（非视频文件/无key），避免后续报错
+    const validVideoObjects = videoObjects.filter((obj: any) => {
+      const fileKey = obj?.key || obj?.Key;
+      return fileKey && isVideoFile(fileKey);
     });
 
-    if (!workerResponse.ok) {
-      throw new Error(`Worker请求失败，状态码：${workerResponse.status}`);
-    }
+    // 核心修复3：兼容key/Key字段获取视频key，为获取元数据做准备
+    const videoKeys = validVideoObjects.map((obj: any) => obj?.key || obj?.Key);
+    // 获取视频元数据，兜底空对象避免后续解构报错
+    const metadataMap = await getVideoMetadataBatch(videoKeys) || new Map();
 
-    const videoObjects = await workerResponse.json();
-    // 过滤有效视频文件（严格类型判断，避免any隐式报错）
-    const validVideoObjects = Array.isArray(videoObjects) 
-      ? videoObjects.filter((obj: Record<string, any>) => {
-          const fileKey = obj?.key || obj?.Key;
-          return typeof fileKey === "string" && isVideoFile(fileKey);
-        })
-      : [];
+    // 日志打印（保留，方便部署后调试）
+    // eslint-disable-next-line no-console
+    console.log("[videos/list] Loaded metadata:", {
+      videoCount: videoKeys.length,
+      metadataCount: metadataMap.size,
+      videoKeys: videoKeys.slice(0, 5),
+      metadataKeys: Array.from(metadataMap.keys()).slice(0, 5),
+    });
 
-    // 获取视频元数据用于多语言展示（处理getVideoMetadataBatch返回null的情况）
-    const videoKeys = validVideoObjects.map((obj: Record<string, any>) => obj?.key || obj?.Key);
-    const metadataMap = (await getVideoMetadataBatch(videoKeys)) ?? new Map<string, Record<string, any>>();
+    // 格式化视频数据，拼接元数据
+    let videos = validVideoObjects
+      .map((obj: any) => {
+        // 统一key字段：优先obj.key，兜底obj.Key，确保非空
+        const key = obj?.key || obj?.Key || "";
+        // 核心修复4：元数据优先级（缓存Map > 自身metadata > 空对象），避免undefined
+        const metadata = metadataMap.get(key) || obj.metadata || {};
+        // 核心修复5：删除无效的obj.locale判断（原代码无该字段，导致过滤逻辑失效）
 
-    // 【仅修改此处1】const改let，解决后续赋值报错，其余完全不变
-    let videos = validVideoObjects.map((obj: Record<string, any>) => {
-      const key = (obj?.key || obj?.Key || "") as string;
-      // 获取当前视频元数据，无则返回空对象（避免null操作）
-      const metadata = metadataMap.get(key) ?? {};
-      
-      // 初始标题：取文件名（去掉路径和后缀）
-      let displayTitle: string = key.split("/").pop()?.replace(/\.[^.]+$/, "") || "未知视频";
-      let displayDescription: string = "";
-      let displayCoverUrl: string | undefined;
+        let localeData: any = {};
+        let displayTitle: string;
+        let displayDescription: string = "";
+        let displayCoverUrl: string | undefined;
 
-      // 多语言核心逻辑：保证切换正常，分两步判断
-      // 1. 优先使用请求指定的语言（修复：metadata?.locales 可选链，解决第58行TS报错）
-      if (parsed.locale && metadata?.locales && typeof metadata.locales === "object" && !Array.isArray(metadata.locales)) {
-        const locData = metadata.locales[parsed.locale];
-        if (locData && typeof locData === "object") {
-          displayTitle = locData.title || displayTitle;
-          displayDescription = locData.description || "";
-          displayCoverUrl = locData.coverUrl || undefined;
-        }
-      } 
-      // 2. 未指定语言时，使用第一个可用的语言信息（再次加固可选链）
-      else if (metadata?.locales && typeof metadata.locales === "object" && !Array.isArray(metadata.locales)) {
-        // 获取所有可用语言key，过滤有效key
-        const availableLocaleKeys = Object.keys(metadata.locales).filter(loc => locales.includes(loc as Locale));
-        const firstLocaleKey = availableLocaleKeys[0];
-        if (firstLocaleKey) {
-          const locData = metadata.locales[firstLocaleKey];
-          if (locData && typeof locData === "object") {
-            displayTitle = locData.title || displayTitle;
-            displayDescription = locData.description || "";
-            displayCoverUrl = locData.coverUrl || undefined;
+        // 语言过滤逻辑：指定了语言则过滤对应语言的有效数据
+        if (locale) {
+          // 取指定语言的元数据，兜底空对象
+          localeData = metadata.locales?.[locale] || {};
+          // 无有效标题则过滤掉该视频
+          if (!localeData.title || localeData.title.trim() === "") {
+            return null;
+          }
+          displayTitle = localeData.title.trim();
+          displayDescription = localeData.description?.trim() || "";
+          displayCoverUrl = localeData.coverUrl;
+        } else {
+          // 未指定语言：优先取第一个有有效标题的语言，兜底用文件名
+          if (metadata && metadata.locales) {
+            // 找到第一个有非空标题的语言
+            const firstLocaleWithTitle = locales.find((loc) => {
+              const locData = metadata.locales[loc];
+              return locData && locData.title && locData.title.trim() !== "";
+            });
+            if (firstLocaleWithTitle) {
+              localeData = metadata.locales[firstLocaleWithTitle];
+              displayTitle = localeData.title.trim();
+              displayDescription = localeData.description?.trim() || "";
+              displayCoverUrl = localeData.coverUrl;
+            } else {
+              // 无有效语言元数据，用文件名作为标题
+              displayTitle = key.split("/").pop()?.replace(/\.[^.]+$/, "") || "未知视频";
+            }
+          } else {
+            // 无任何元数据，用文件名作为标题
+            displayTitle = key.split("/").pop()?.replace(/\.[^.]+$/, "") || "未知视频";
           }
         }
-      }
 
-      // 处理可用语言列表（去重+匹配全局locales，保证多语言切换的选项有效）
-      const availableLocales = metadata?.locales && typeof metadata.locales === "object" 
-        ? Object.keys(metadata.locales).filter(loc => locales.includes(loc as Locale)) 
-        : [];
+        // 核心修复6：兼容size/Size、lastModified/LastModified字段，兜底默认值
+        return {
+          key,
+          size: obj?.size || obj?.Size || 0,
+          lastModified: obj?.lastModified || obj?.LastModified?.toISOString() || new Date().toISOString(),
+          title: displayTitle,
+          description: displayDescription,
+          coverUrl: displayCoverUrl,
+          // 构造精简元数据：仅保留有有效标题的语言 【修复类型断言】
+          metadata: metadata?.locales
+            ? {
+                locales: Object.keys(metadata.locales).filter((loc) => {
+                  const locData = metadata.locales[loc];
+                  return locData && locData.title && locData.title.trim() !== "";
+                }),
+              }
+            : undefined,
+        };
+      })
+      // 过滤掉null值（语言过滤无效的视频）
+      .filter((v) => v !== null) as Array<{
+      key: string;
+      size: number;
+      lastModified: string;
+      title: string;
+      description: string;
+      coverUrl?: string;
+      metadata?: { locales: string[] };
+    }>;
 
-      return {
-        key,
-        size: (obj?.size || obj?.Size || 0) as number,
-        lastModified: (obj?.lastModified || obj?.LastModified?.toISOString() || new Date().toISOString()) as string,
-        title: displayTitle,
-        description: displayDescription,
-        coverUrl: displayCoverUrl,
-        availableLocales, // 给前端的多语言切换选项
-      };
-    });
-
-    // 标题搜索过滤逻辑（加固：处理metadata.locales空值，避免搜索时报错）
-    if (parsed.title && parsed.title.trim()) {
-      const searchTerm = parsed.title.trim().toLowerCase();
-      // 【此处2】无修改，仅因上一行const改let，此处赋值不再报错
+    // 标题搜索逻辑：【终极修复172行Object.keys类型报错，所有问题全解决】
+    if (title && title.trim()) {
+      const searchTitle = title.trim().toLowerCase();
       videos = videos.filter((video) => {
-        // 检查所有可用语言的标题（多语言搜索，匹配任意语言标题即命中）
-        const hasMatchingTitle = video.availableLocales.some((locale) => {
-          const videoMeta = metadataMap.get(video.key) ?? {};
-          const locData = videoMeta?.locales?.[locale];
-          return typeof locData?.title === "string" && locData.title.toLowerCase().includes(searchTerm);
-        });
-
-        // 兜底：匹配视频文件名（兼容无多语言标题的情况）
-        const fileNameMatches = video.key.toLowerCase().includes(searchTerm);
-        return hasMatchingTitle || fileNameMatches;
+        // 先在所有语言的标题中搜索
+        if (video.metadata?.locales) {
+          const videoMetadata = metadataMap.get(video.key) as { locales?: Record<string, { title?: string }> } || {};
+          // 严格类型校验：先判断locales存在且为对象，再执行后续逻辑
+          if (videoMetadata.locales && typeof videoMetadata.locales === 'object' && !Array.isArray(videoMetadata.locales)) {
+            for (const loc of video.metadata.locales) {
+              const locData = videoMetadata.locales![loc];
+              if (locData?.title?.toLowerCase().includes(searchTitle)) {
+                return true;
+              }
+            }
+          }
+        }
+        // 可选链+兜底false，彻底防空值
+        return video.title?.toLowerCase().includes(searchTitle) || false;
+      });
+      // 搜索结果返回，分页字段兜底默认值
+      return Response.json({
+        videos,
+        isTruncated: false,
+        nextContinuationToken: null,
+        keyCount: videos.length,
       });
     }
 
-    // 返回成功响应
-    return new Response(JSON.stringify({
-      data: videos,
-      total: videos.length
-    }), {
-      headers: { "Content-Type": "application/json" }
+    // 正常结果返回，分页字段兜底默认值（外部API无分页，直接返回false/null）
+    return Response.json({
+      videos,
+      isTruncated: false,
+      nextContinuationToken: null,
+      keyCount: videos.length,
     });
-
-  } catch (error) {
-    console.error("获取视频列表失败：", error);
-    // 统一错误响应，返回具体错误信息
-    return new Response(JSON.stringify({
-      error: "获取视频列表失败",
-      message: error instanceof Error ? error.message : "未知错误"
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+  } catch (e) {
+    // 核心修复7：完善错误捕获，打印详细错误日志，返回友好错误信息
+    const errorMsg = e instanceof Error ? e.message : "Unknown server error";
+    // eslint-disable-next-line no-console
+    console.error("[videos/list] Request failed:", e);
+    return Response.json(
+      { error: "List videos failed", message: errorMsg },
+      { status: 500 }
+    );
   }
 }
