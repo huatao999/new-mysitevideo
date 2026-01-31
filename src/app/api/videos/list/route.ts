@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { env } from "@/lib/env";
+import { getVideoMetadataBatch } from "@/lib/video-metadata/store";
 import { locales, type Locale } from "@/i18n/locales";
 
 const querySchema = z.object({
@@ -17,84 +18,103 @@ function isVideoFile(key: string): boolean {
   const lowerKey = key.toLowerCase();
   return VIDEO_EXTENSIONS.some((ext) => lowerKey.endsWith(ext));
 }
-
 export async function GET(req: Request) {
   try {
-    if (!process.env.NEXT_PUBLIC_VIDEO_API_URL) {
-      return Response.json({ error: "NEXT_PUBLIC_VIDEO_API_URL missing" }, { status: 500 });
-    }
-
     const url = new URL(req.url);
-    const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
-    if (!parsed.success) {
-      return Response.json(
-        { error: "Invalid query", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
+    const parsed = querySchema.parse(Object.fromEntries(url.searchParams.entries()));
 
-    const { title, locale } = parsed.data;
-    
-    // 直接请求Worker接口获取视频列表
-    const workerResponse = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL);
+    // 从Cloudflare Worker获取视频列表
+    const workerResponse = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
     if (!workerResponse.ok) {
-      return Response.json(
-        { error: "Failed to fetch from worker API", status: workerResponse.status },
-        { status: 500 }
-      );
+      throw new Error(`Worker request failed: ${workerResponse.status}`);
     }
-    
+
     const videoObjects = await workerResponse.json();
-    if (!Array.isArray(videoObjects)) {
-      return Response.json({ videos: [], isTruncated: false, nextContinuationToken: null, keyCount: 0 });
-    }
+    const validVideoObjects = Array.isArray(videoObjects) 
+      ? videoObjects.filter((obj: any) => {
+          const fileKey = obj?.key || obj?.Key;
+          return fileKey && isVideoFile(fileKey);
+        })
+      : [];
 
-    const validVideoObjects = videoObjects.filter((obj: any) => {
-      const fileKey = obj?.key || obj?.Key;
-      return fileKey && isVideoFile(fileKey);
+    // 获取视频元数据用于多语言展示
+    const videoKeys = validVideoObjects.map((obj: any) => obj?.key || obj?.Key);
+    const metadataMap = await getVideoMetadataBatch(videoKeys) || new Map();
+
+    // 处理视频数据和多语言信息
+    let videos = validVideoObjects.map((obj: any) => {
+      const key = obj?.key || obj?.Key || "";
+      const metadata = metadataMap.get(key) || {};
+      
+      let displayTitle: string = key.split("/").pop()?.replace(/\.[^.]+$/, "") || "未知视频";
+      let displayDescription: string = "";
+      let displayCoverUrl: string | undefined;
+
+      // 根据请求的语言展示对应内容
+      if (parsed.locale && metadata.locales?.[parsed.locale]) {
+        const locData = metadata.locales[parsed.locale];
+        displayTitle = locData.title || displayTitle;
+        displayDescription = locData.description || "";
+        displayCoverUrl = locData.coverUrl;
+      } 
+      // 未指定语言时使用第一个可用语言的信息
+      else if (metadata.locales) {
+        const firstLocaleKey = Object.keys(metadata.locales)[0];
+        if (firstLocaleKey) {
+          const locData = metadata.locales[firstLocaleKey];
+          displayTitle = locData.title || displayTitle;
+          displayDescription = locData.description || "";
+          displayCoverUrl = locData.coverUrl;
+        }
+      }
+
+      return {
+        key,
+        size: obj?.size || obj?.Size || 0,
+        lastModified: obj?.lastModified || obj?.LastModified?.toISOString() || new Date().toISOString(),
+        title: displayTitle,
+        description: displayDescription,
+        coverUrl: displayCoverUrl,
+        availableLocales: metadata.locales ? Object.keys(metadata.locales) : [],
+      };
     });
 
-    let videos = validVideoObjects
-      .map((obj: any) => {
-        const key = obj?.key || obj?.Key || "";
-        
-        // 简化元数据处理，避免类型错误
-        return {
-          key,
-          size: obj?.size || obj?.Size || 0,
-          lastModified: obj?.lastModified || obj?.LastModified?.toISOString() || new Date().toISOString(),
-          title: obj?.title || key.split("/").pop()?.replace(/\.[^.]+$/, "") || "未知视频",
-          description: obj?.description || "",
-          coverUrl: obj?.coverUrl,
-        };
-      })
-      // 语言过滤 - 简化实现避免metadata错误
-      .filter((video: any) => {
-        if (!locale) return true;
-        // 如果有语言信息则过滤，否则显示所有视频
-        return !video.locale || video.locale === locale;
+    // 标题搜索过滤逻辑
+    if (parsed.title && parsed.title.trim()) {
+      const searchTerm = parsed.title.trim().toLowerCase();
+      videos = videos.filter((video) => {
+        // 检查所有可用语言的标题
+        const hasMatchingTitle = video.availableLocales.some((locale) => {
+          const videoMeta = metadataMap.get(video.key) || {};
+          const locData = videoMeta.locales?.[locale];
+          return locData?.title?.toLowerCase().includes(searchTerm);
+        });
+
+        // 同时检查文件名作为 fallback
+        const fileNameMatches = video.key.toLowerCase().includes(searchTerm);
+        return hasMatchingTitle || fileNameMatches;
       });
-
-    // 标题搜索
-    if (title && title.trim()) {
-      const searchTitle = title.trim().toLowerCase();
-      videos = videos.filter((video: any) => 
-        video.title?.toLowerCase().includes(searchTitle)
-      );
     }
 
-    return Response.json({
-      videos,
-      isTruncated: false,
-      nextContinuationToken: null,
-      keyCount: videos.length,
+    return new Response(JSON.stringify({
+      data: videos,
+      total: videos.length
+    }), {
+      headers: { "Content-Type": "application/json" }
     });
-  } catch (e) {
-    const errorMsg = e instanceof Error ? e.message : "Unknown server error";
-    console.error("[videos/list] Request failed:", e);
-    return Response.json(
-      { error: "List videos failed", message: errorMsg },
-      { status: 500 }
-    );
+
+  } catch (error) {
+    console.error("Video list error:", error);
+    return new Response(JSON.stringify({
+      error: "Failed to fetch video list",
+      message: error instanceof Error ? error.message : String(error)
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
