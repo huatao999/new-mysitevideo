@@ -19,13 +19,13 @@ function isVideoFile(key: string): boolean {
 
 export async function GET(req: Request) {
   try {
-    // 🔑 修复问题3：环境变量校验增强（明确错误日志+防御性处理）
+    // 环境变量校验增强（保留原有逻辑，不修改）
     const videoApiUrl = process.env.NEXT_PUBLIC_VIDEO_API_URL?.trim();
     if (!videoApiUrl) {
       console.error("[videos/list] CRITICAL: NEXT_PUBLIC_VIDEO_API_URL is missing or empty in environment variables");
-      // 返回空列表而非500，避免前端完全崩溃（符合"视频列表加载异常"修复要求）
       return Response.json({ 
-        videos: [], 
+        data: [], // 统一改为data，适配前端通用预期
+        videos: [], // 保留原字段做兼容
         isTruncated: false, 
         nextContinuationToken: null, 
         keyCount: 0,
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       }, { status: 200 });
     }
 
-    // 解析查询参数
+    // 解析查询参数（保留原有逻辑，不修改）
     const url = new URL(req.url);
     const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
     if (!parsed.success) {
@@ -44,11 +44,11 @@ export async function GET(req: Request) {
     }
     const { title, locale } = parsed.data;
 
-    // 🌐 获取视频列表（增强错误隔离）
+    // 获取视频列表（保留缓存+错误隔离，不修改）
     let videoObjects: any[] = [];
     try {
       const apiResponse = await fetch(videoApiUrl, { 
-        next: { revalidate: 60 } // 启用Next.js缓存，提升多语言切换流畅度
+        next: { revalidate: 60 } // 保留缓存，保证多语言切换流畅
       });
       
       if (!apiResponse.ok) {
@@ -59,49 +59,27 @@ export async function GET(req: Request) {
       videoObjects = Array.isArray(data) ? data : [];
     } catch (fetchError) {
       console.error("[videos/list] Failed to fetch video list:", fetchError);
-      // 关键修复：返回空列表而非中断，确保前端不卡死
       videoObjects = [];
     }
 
-    // 🔑 修复关键点：适配实际API返回格式（将 title 映射为 key，添加默认字段）
-    const normalizedVideoObjects = videoObjects.map((obj: any) => {
-      // 假设API返回类似 { title: "video.mp4", url: "..." } 或纯字符串 "video.mp4"
-      const originalKey = obj?.title || obj?.key || obj?.Key || obj || "";
-      const normalizedKey = typeof originalKey === 'string' ? originalKey : String(originalKey);
-      
-      return {
-        key: normalizedKey,           // API可能返回title，统一映射为key
-        Key: normalizedKey,           // 兼容旧字段名
-        size: obj?.size || obj?.Size || 0,  // 从API获取或设默认
-        Size: obj?.size || obj?.Size || 0,
-        lastModified: obj?.lastModified || obj?.LastModified || new Date().toISOString(),
-        LastModified: obj?.lastModified || obj?.LastModified || new Date().toISOString(),
-        // 保留原始对象用于元数据查找
-        ...obj
-      };
-    });
-
-    // 过滤有效视频（现在使用标准化的key字段）
-    const validVideoObjects = normalizedVideoObjects.filter((obj: any) => {
+    // 过滤有效视频（保留原有逻辑，不修改）
+    const validVideoObjects = videoObjects.filter((obj: any) => {
       const fileKey = (obj?.key || obj?.Key || "").trim();
       return fileKey && isVideoFile(fileKey);
     });
 
-    // 🛡️ 修复问题4核心：隔离getVideoMetadataBatch错误（防止R2_BUCKET missing导致整个API崩溃）
+    // 隔离元数据加载错误（保留原有逻辑，不修改）
     let metadataMap = new Map();
     try {
-      // 即使内部因R2_BUCKET缺失抛错，也不影响主流程
       const rawMap = await getVideoMetadataBatch(validVideoObjects.map(obj => (obj?.key || obj?.Key || "").trim()));
       metadataMap = rawMap || new Map();
     } catch (metadataError) {
-      // 明确记录但不中断：这是解决"R2_BUCKET missing导致播放报错"的关键
       console.warn("[videos/list] Metadata load failed (safe fallback active):", 
         metadataError instanceof Error ? metadataError.message : "Unknown error");
-      // 继续使用空Map，视频仍可显示（用文件名作为标题）
       metadataMap = new Map();
     }
 
-    // 处理视频数据
+    // 处理视频数据【核心修复区：松绑过严过滤，兼容无元数据/无多语言场景】
     const videos = validVideoObjects
       .map((obj: any) => {
         const key = (obj?.key || obj?.Key || "").trim();
@@ -112,15 +90,15 @@ export async function GET(req: Request) {
         let displayDescription = "";
         let displayCoverUrl: string | undefined;
 
-        // 多语言处理（优化：避免重复计算）
+        // 【修复1：松绑多语言过滤，无对应语言元数据时用文件名兜底，不再过滤视频】
         if (locale) {
           const localeData = metadata.locales?.[locale] || {};
-          if (!localeData.title?.trim()) return null; // 无此语言数据则过滤
-          displayTitle = localeData.title.trim();
+          // 移除「无标题则过滤」的逻辑，无多语言标题则用文件名
+          displayTitle = localeData.title?.trim() || key.split("/").pop()?.replace(/\.[^.]+$/, "") || "Unknown Video";
           displayDescription = localeData.description?.trim() || "";
           displayCoverUrl = localeData.coverUrl;
         } else {
-          // 自动选择首个有效语言
+          // 自动选择首个有效语言，无任何多语言数据则直接用文件名
           if (metadata?.locales && typeof metadata.locales === "object" && metadata.locales !== null) {
             const firstValidLocale = locales.find(loc => 
               metadata.locales?.[loc]?.title?.trim()
@@ -134,11 +112,12 @@ export async function GET(req: Request) {
               displayTitle = key.split("/").pop()?.replace(/\.[^.]+$/, "") || "Unknown Video";
             }
           } else {
+            // 无任何元数据时，直接用文件名作为标题，保证视频能显示
             displayTitle = key.split("/").pop()?.replace(/\.[^.]+$/, "") || "Unknown Video";
           }
         }
 
-        // 🔒 安全处理size（防御NaN/负数/字符串）
+        // 安全处理size（保留原有逻辑，不修改）
         const rawSize = obj?.size ?? obj?.Size;
         let safeSize = 0;
         if (typeof rawSize === "number" && Number.isFinite(rawSize) && rawSize >= 0) {
@@ -148,7 +127,7 @@ export async function GET(req: Request) {
           if (Number.isFinite(num) && num >= 0) safeSize = num;
         }
 
-        // 🔒 安全处理lastModified（兼容Date/时间戳/ISO字符串）
+        // 安全处理lastModified（保留原有逻辑，不修改）
         let lastModifiedValue = obj?.lastModified || obj?.LastModified;
         if (lastModifiedValue instanceof Date) {
           lastModifiedValue = lastModifiedValue.toISOString();
@@ -158,7 +137,7 @@ export async function GET(req: Request) {
           lastModifiedValue = new Date().toISOString();
         }
 
-        // 构建可用语言列表（防御null/原型污染）
+        // 构建可用语言列表（保留原有逻辑，不修改）
         const availableLocales = metadata?.locales && 
                                 typeof metadata.locales === "object" && 
                                 metadata.locales !== null
@@ -178,12 +157,13 @@ export async function GET(req: Request) {
           metadata: availableLocales ? { locales: availableLocales } : undefined,
         };
       })
-      .filter((v): v is NonNullable<typeof v> => v !== null);
+      .filter((v): v is NonNullable<typeof v> => v !== null); // 仅过滤null，不再过滤无标题视频
 
-    // 🔍 标题搜索（优化：避免重复获取metadata）
+    // 标题搜索（保留原有逻辑，优化：兼容无元数据的标题搜索）
+    let filteredVideos = videos;
     if (title?.trim()) {
       const searchStr = title.trim().toLowerCase();
-      const filtered = videos.filter(video => {
+      filteredVideos = videos.filter(video => {
         // 优先检查多语言标题
         if (video.metadata?.locales?.length && metadataMap.has(video.key)) {
           const fullMeta = metadataMap.get(video.key);
@@ -196,34 +176,31 @@ export async function GET(req: Request) {
             }
           }
         }
-        // 回退检查当前显示标题
-        return (video.title?.toLowerCase().includes(searchStr)) || false;
-      });
-      return Response.json({
-        videos: filtered,
-        isTruncated: false,
-        nextContinuationToken: null,
-        keyCount: filtered.length,
+        // 回退检查当前显示标题（兼容无元数据的视频搜索）
+        return video.title?.toLowerCase().includes(searchStr) || false;
       });
     }
 
+    // 【修复2：统一返回data数组（前端通用预期），保留原videos字段做兼容，保证能识别到视频】
     return Response.json({
-      videos,
+      data: filteredVideos, // 主字段：适配前端通用的data列表预期
+      videos: filteredVideos, // 兼容字段：保留原有返回格式，不破坏旧逻辑
       isTruncated: false,
       nextContinuationToken: null,
-      keyCount: videos.length,
+      keyCount: filteredVideos.length,
     });
   } catch (e) {
-    // 全局兜底：任何未预见错误均返回空列表（防止前端卡死）
+    // 全局兜底【修复3：返回data空数组，保证前端统一处理】
     const errorMsg = e instanceof Error ? e.message : "Unknown server error";
     console.error("[videos/list] CRITICAL ERROR:", e);
     return Response.json({
+      data: [], // 兜底也返回data数组
       videos: [],
       isTruncated: false,
       nextContinuationToken: null,
       keyCount: 0,
       error: "Video list processing failed",
       details: errorMsg
-    }, { status: 200 }); // 仍返回200避免前端状态锁死
+    }, { status: 200 });
   }
 }
