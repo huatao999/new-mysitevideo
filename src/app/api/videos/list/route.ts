@@ -20,7 +20,7 @@ function isVideoFile(key: string): boolean {
 export async function GET(req: Request) {
   try {
     // 环境变量校验增强（保留原有逻辑，不修改）
-    const videoApiUrl = process.env.NEXT_PUBLIC_VIDEO_API_URL?.trim();
+    const videoApiUrl = "https://gentle-cell-74b9.ygy131419.workers.dev/".trim();
     if (!videoApiUrl) {
       console.error("[videos/list] CRITICAL: NEXT_PUBLIC_VIDEO_API_URL is missing or empty in environment variables");
       return Response.json({ 
