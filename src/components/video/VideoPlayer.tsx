@@ -152,7 +152,7 @@ export default function VideoPlayer({src, poster, vastTagUrl, enableAds}: VideoP
             muted: false,
             playsinline: true,
             poster,
-            sources: [{src: "https://pub-02f81dcce62748679873632c9e5ebe3d.r2.dev/ep1.mp4",type: "video/mp4"}],
+            sources: [{src,type: "video/mp4"}],
             playbackRates: PLAYBACK_SPEEDS.map((s) => s.value),
             // 移动端优化
             responsive: true,
@@ -253,7 +253,6 @@ export default function VideoPlayer({src, poster, vastTagUrl, enableAds}: VideoP
         playsInline
         data-setup="{}"
         src={src}
-        type={mimeType}
         controls
        />
     </div>
