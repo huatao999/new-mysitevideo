@@ -252,7 +252,10 @@ export default function VideoPlayer({src, poster, vastTagUrl, enableAds}: VideoP
         className="video-js vjs-big-play-centered"
         playsInline
         data-setup="{}"
-      />
+        src={src}
+        type={mimeType}
+        controls
+       />
     </div>
   );
 }
