@@ -63,8 +63,26 @@ export async function GET(req: Request) {
       videoObjects = [];
     }
 
-    // 过滤有效视频
-    const validVideoObjects = videoObjects.filter((obj: any) => {
+    // 🔑 修复关键点：适配实际API返回格式（将 title 映射为 key，添加默认字段）
+    const normalizedVideoObjects = videoObjects.map((obj: any) => {
+      // 假设API返回类似 { title: "video.mp4", url: "..." } 或纯字符串 "video.mp4"
+      const originalKey = obj?.title || obj?.key || obj?.Key || obj || "";
+      const normalizedKey = typeof originalKey === 'string' ? originalKey : String(originalKey);
+      
+      return {
+        key: normalizedKey,           // API可能返回title，统一映射为key
+        Key: normalizedKey,           // 兼容旧字段名
+        size: obj?.size || obj?.Size || 0,  // 从API获取或设默认
+        Size: obj?.size || obj?.Size || 0,
+        lastModified: obj?.lastModified || obj?.LastModified || new Date().toISOString(),
+        LastModified: obj?.lastModified || obj?.LastModified || new Date().toISOString(),
+        // 保留原始对象用于元数据查找
+        ...obj
+      };
+    });
+
+    // 过滤有效视频（现在使用标准化的key字段）
+    const validVideoObjects = normalizedVideoObjects.filter((obj: any) => {
       const fileKey = (obj?.key || obj?.Key || "").trim();
       return fileKey && isVideoFile(fileKey);
     });
