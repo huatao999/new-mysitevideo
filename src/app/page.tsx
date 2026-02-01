@@ -24,7 +24,7 @@ export default function VideoList() {
 
     const fetchVideos = async () => {
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL);
+        const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!);
         
         if (!response.ok) {
           // 【健壮性】提供更明确的 HTTP 错误信息
