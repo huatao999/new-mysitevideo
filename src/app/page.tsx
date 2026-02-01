@@ -9,7 +9,7 @@ export default function VideoList() {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL);
+        const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!);
         if (!response.ok) throw new Error('Failed to fetch videos');
         const data = await response.json();
         setVideos(data);
