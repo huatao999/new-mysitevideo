@@ -13,103 +13,62 @@ export default function VideoList() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
+  // 优先级：环境变量 > 硬编码兜底 (方便调试)
+  const API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || 'https://gentle-cell-74b9.ygy131419.workers.dev';
+
   useEffect(() => {
-    // 【关键修正】环境变量校验：保留逻辑正确性（不去掉!），但增强诊断日志
-    // 说明：若去掉!会导致"有环境变量时触发报错"的严重逻辑错误
-    // 此处保留 ! 判断（缺失时拦截），并通过日志明确打印实际值辅助排查
-    console.error('[VideoList Debug] 🔍 ENV check | Raw value:', JSON.stringify(process.env.NEXT_PUBLIC_VIDEO_API_URL));
-    
-    // if (!process.env.NEXT_PUBLIC_VIDEO_API_URL) {
-    //   console.error('[VideoList Debug] ⚠️ ENV MISSING: NEXT_PUBLIC_VIDEO_API_URL is falsy (undefined/empty)');
-    //   setError('视频服务配置缺失，请联系管理员');
-    //   setLoading(false);
-    //   return;
-    // }
-
-    console.error('[VideoList Debug] ✅ Valid API URL:', process.env.NEXT_PUBLIC_VIDEO_API_URL);
-
     const fetchVideos = async () => {
       try {
-        const response = await fetch('https://gentle-cell-74b9.ygy131419.workers.dev');
-        // const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!);
-        
+        setLoading(true);
+        // 添加 mode: 'cors' 显式声明
+        const response = await fetch(API_URL, {
+          method: 'GET',
+          mode: 'cors', 
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+
         if (!response.ok) {
-          console.error(
-            '[VideoList Debug] ❌ HTTP Error | Status:', 
-            response.status, 
-            '| Text:', 
-            response.statusText
-          );
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`服务器响应异常: ${response.status}`);
         }
 
         const rawData = await response.json();
-        console.error('[VideoList Debug] 📤 Raw response:', rawData);
         
-        // 【核心修复】兼容后端实际返回结构 { videos: [...], warning: "..." }
-        // 优先匹配 videos 字段（根据 Network 响应确认），回退 data 字段
+        // 兼容多种数据结构
         const videoList = Array.isArray(rawData) 
           ? rawData 
-          : (Array.isArray(rawData?.videos) 
-              ? rawData.videos 
-              : (Array.isArray(rawData?.data) ? rawData.data : []));
-        
-        if (!Array.isArray(videoList)) {
-          throw new Error('数据格式异常：无法解析视频列表');
-        }
-        
-        console.error('[VideoList Debug] 📦 Extracted videos count:', videoList.length);
+          : (rawData.videos || rawData.data || []);
+
         setVideos(videoList);
-      } catch (err) {
-        console.error('[VideoList Debug] 🚨 Error details:', err instanceof Error ? err.message : String(err));
-        
-        let message = '视频加载失败，请稍后重试';
-        if (err instanceof Error) {
-          message = err.message;
-        } else if (typeof err === 'string') {
-          message = err;
-        } else if (err && typeof err === 'object' && 'message' in err) {
-          message = String(err.message);
-        }
-        setError(message);
-        console.error('[VideoList] Critical fetch error:', err);
+      } catch (err: any) {
+        console.error('Fetch Error:', err);
+        setError(err.message || '视频加载失败，请检查网络或跨域设置');
       } finally {
-        console.error('[VideoList Debug] 🔚 Fetch completed | Loading=false');
         setLoading(false);
       }
     };
 
     fetchVideos();
-  }, []);
+  }, [API_URL]);
 
-  console.error('[VideoList Debug] 🖼️ Render phase | Videos count:', videos.length);
-  
-  if (loading) return <div className="flex justify-center items-center h-screen">加载中...</div>;
-  if (error) return <div className="text-red-500 text-center mt-10">⚠️ {error}</div>;
+  if (loading) return <div className="text-center p-10">加载中...</div>;
+  if (error) return <div className="text-red-500 text-center p-10">⚠️ {error}</div>;
 
   return (
     <div className="container mx-auto p-5">
-      <h1 className="text-3xl font-bold mb-8 text-center">我的视频列表</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {videos.length === 0 ? (
-          <div className="text-center col-span-full py-12 text-gray-500">
-            暂无视频数据
+      <h1 className="text-3xl font-bold mb-8 text-center">视频列表</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {videos.map((video, idx) => (
+          <div key={video.id || idx} className="border rounded-lg p-4 shadow">
+            <img 
+              src={video.zhCover || video.enCover || 'https://via.placeholder.com'} 
+              alt={video.title} 
+              className="w-full h-48 object-cover rounded"
+            />
+            <h3 className="mt-2 font-bold truncate">{video.title}</h3>
           </div>
-        ) : (
-          videos.map((video, index) => (
-            <div 
-              key={video.id ?? index} 
-              className="border rounded-lg p-4 shadow hover:shadow-lg transition"
-            >
-              <img 
-                src={video.zhCover || video.enCover || '/placeholder.jpg'} 
-                alt={video.title || '无标题视频'} 
-                className="w-full h-48 object-cover rounded mb-3"
-              />
-              <h3 className="text-xl font-semibold truncate">{video.title}</h3>
-            </div>
-          ))
-        )}
+        ))}
       </div>
     </div>
   );
