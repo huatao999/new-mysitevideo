@@ -30,7 +30,8 @@ export default function VideoList() {
 
     const fetchVideos = async () => {
       try {
-        const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!);
+        const response = await fetch('https://gentle-cell-74b9.ygy131419.workers.dev');
+        // const response = await fetch(process.env.NEXT_PUBLIC_VIDEO_API_URL!);
         
         if (!response.ok) {
           console.error(
