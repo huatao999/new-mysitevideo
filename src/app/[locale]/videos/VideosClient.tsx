@@ -118,6 +118,7 @@ export default function VideosClient() {
         setVideos((prev) => [...prev, ...videosWithCovers]);
       } else {
         // Replace videos (new search)
+        console.log('videosWithCovers的值是：', videosWithCovers);
         setVideos(videosWithCovers);
       }
       setNextToken(data.nextContinuationToken || null);
