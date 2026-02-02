@@ -43,7 +43,7 @@ export default function VideoList() {
           : (rawData.videos || rawData.data || []);
 
         // 核心修改：映射测试接口数据为前端Video格式，保留id、补全占位符
-        setVideos(videoList.map(item => ({
+        setVideos(videoList.map((item: any) => ({
           id: item.id, // 保留测试接口的id，让列表key更规范
           title: item.title,
           zhCover: '',
