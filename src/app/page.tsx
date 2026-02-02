@@ -15,7 +15,7 @@ export default function VideoList() {
 
   // 优先级：环境变量 > 硬编码兜底 (方便调试)
   const API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || '';
-  console.log ('API_URL:', API_URL);
+  console.log('API_URL:', API_URL);
   // const API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || 'https://gentle-cell-74b9.ygy131419.workers.dev';
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function VideoList() {
         // 添加 mode: 'cors' 显式声明
         const response = await fetch(API_URL, {
           method: 'GET',
-          mode: 'cors', 
+          mode: 'cors',
           headers: {
             'Accept': 'application/json',
           }
@@ -42,7 +42,13 @@ export default function VideoList() {
           ? rawData 
           : (rawData.videos || rawData.data || []);
 
-        setVideos(videoList);
+        // 核心修改：映射测试接口数据为前端Video格式，保留id、补全占位符
+        setVideos(videoList.map(item => ({
+          id: item.id, // 保留测试接口的id，让列表key更规范
+          title: item.title,
+          zhCover: '',
+          enCover: ''
+        })));
       } catch (err: any) {
         console.error('Fetch Error:', err);
         setError(err.message || '视频加载失败，请检查网络或跨域设置');
@@ -64,7 +70,8 @@ export default function VideoList() {
         {videos.map((video, idx) => (
           <div key={video.id || idx} className="border rounded-lg p-4 shadow">
             <img 
-              src={video.zhCover || video.enCover || 'https://via.placeholder.com'} 
+              // 补全占位符地址，避免图片加载失败，适配48px高度
+              src={video.zhCover || video.enCover || 'https://via.placeholder.com/300x200'} 
               alt={video.title} 
               className="w-full h-48 object-cover rounded"
             />
