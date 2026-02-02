@@ -19,12 +19,12 @@ export default function VideoList() {
     // 此处保留 ! 判断（缺失时拦截），并通过日志明确打印实际值辅助排查
     console.error('[VideoList Debug] 🔍 ENV check | Raw value:', JSON.stringify(process.env.NEXT_PUBLIC_VIDEO_API_URL));
     
-    if (!process.env.NEXT_PUBLIC_VIDEO_API_URL) {
-      console.error('[VideoList Debug] ⚠️ ENV MISSING: NEXT_PUBLIC_VIDEO_API_URL is falsy (undefined/empty)');
-      setError('视频服务配置缺失，请联系管理员');
-      setLoading(false);
-      return;
-    }
+    // if (!process.env.NEXT_PUBLIC_VIDEO_API_URL) {
+    //   console.error('[VideoList Debug] ⚠️ ENV MISSING: NEXT_PUBLIC_VIDEO_API_URL is falsy (undefined/empty)');
+    //   setError('视频服务配置缺失，请联系管理员');
+    //   setLoading(false);
+    //   return;
+    // }
 
     console.error('[VideoList Debug] ✅ Valid API URL:', process.env.NEXT_PUBLIC_VIDEO_API_URL);
 
