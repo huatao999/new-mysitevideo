@@ -67,7 +67,7 @@ const VideosClient = () => {
             <img
               src={item.zhCover}
               alt={item.title}
-              onError={(e) => (e.target.src = item.fallbackZhCover)}
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {(e.target as HTMLImageElement).src = item.fallbackZhCover}}
               style={{ width: '100%', height: '120px', objectFit: 'cover' }}
             />
             <div style={{ padding: '12px' }}>
