@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { z } from "zod";
 import { getVideoMetadataBatch } from "@/lib/video-metadata/store";
 import { locales, type Locale } from "@/i18n/locales";
