@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {getAdConfig} from "@/lib/ads/config";
 import {z} from "zod";
 
@@ -48,3 +49,4 @@ export async function GET(req: Request) {
     return Response.json({error: "Get VAST URL failed", message}, {status: 500});
   }
 }
+
