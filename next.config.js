@@ -1,17 +1,20 @@
-// 新版Next16 + next-intl 强制要求：显式导入+注册配置
+// Next16 + next-intl 官方极简写法：无外部导入，彻底规避解析冲突
 import createNextIntlConfig from 'next-intl/config';
-// 手动导入根目录的next-intl配置文件（关键！让Next.js能找到）
-import intlConfig from './next-intl.config.js';
 
-// 用next-intl的方法创建配置
-const withNextIntl = createNextIntlConfig(intlConfig);
+// 直接在这里写国际化配置（和之前的next-intl.config.js内容完全一致，保留多语言）
+const withNextIntl = createNextIntlConfig({
+  locales: ["zh", "en"], // 保留中英多语言
+  defaultLocale: "zh",   // 默认中文/zh
+  localePrefix: "as-needed",
+  runtime: "nodejs"      // 适配Netlify构建环境
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["next-intl"], // 编译next-intl
+  transpilePackages: ["next-intl"],
   reactStrictMode: true,
-  output: "standalone" // 适配Netlify运行时
+  output: "standalone" // 适配Netlify Next.js运行时
 };
 
-// 显式导出：将next-intl配置和Next.js配置合并（核心！）
+// 合并配置导出（核心逻辑不变）
 export default withNextIntl(nextConfig);
