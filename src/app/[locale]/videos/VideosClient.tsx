@@ -103,7 +103,7 @@ export default function VideosClient() {
           if (currentLangCover) { // 用动态的多语言封面替换固定的coverUrl
             let coverUrl = currentLangCover;
             // 原有预签名URL逻辑不变
-            if (!coverUrl.startsWith("http://") && !coverUrl.startsWith("https://") && !coverUrl.startsWith("data:")) {
+            if (!((coverUrl as string).startsWith("http://") || (coverUrl as string).startsWith("https://") || (coverUrl as string).startsWith("data:"))) {
               const presignedCoverUrl = await loadCoverUrl(coverUrl);
               if (presignedCoverUrl) coverUrl = presignedCoverUrl;
               else console.warn(`Failed to load cover URL for ${video.key}`);
