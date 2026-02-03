@@ -1,9 +1,7 @@
-// 项目根目录/next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 保留你原来的所有配置（比如images、env等），只加下面这行
-  transpilePackages: ['next-intl'], // 让Next16兼容next-intl，必加
-  reactStrictMode: true, // 可选，加了更规范，不影响功能
+  transpilePackages: ["next-intl"], // 让Next16正确编译next-intl
+  reactStrictMode: true, // 规范配置，不影响功能
+  output: "standalone"   // 适配Netlify的Next.js运行时，避免部署兼容问题
 };
-
 export default nextConfig;
