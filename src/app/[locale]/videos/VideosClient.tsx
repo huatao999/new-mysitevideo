@@ -35,6 +35,8 @@ export default function VideosClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  // 【新增1】定义播放器状态，存点击后获取的真实播放URL
+  const [playVideoUrl, setPlayVideoUrl] = useState<string | null>(null);
 
   // 加载封面图片的预签名 URL（保留原有逻辑，未修改）
   async function loadCoverUrl(coverKey: string): Promise<string | null> {
@@ -65,6 +67,35 @@ export default function VideosClient() {
     return null;
   }
 
+  // 【新增2】点击封面的播放处理函数（核心！触发预签名请求）
+  const handleVideoPlay = async (videoKey: string, e: React.MouseEvent) => {
+    // 阻止跳转到详情页，只触发播放
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      console.log(`【触发播放】视频key: ${videoKey}`);
+      // 调用你原有已写好的loadVideoUrl，获取真实播放预签名URL
+      const realVideoUrl = await loadVideoUrl(videoKey);
+      if (realVideoUrl) {
+        setPlayVideoUrl(realVideoUrl); // 赋值给播放器状态
+        console.log(`【播放成功】获取到URL: ${realVideoUrl}`);
+        // 自动聚焦播放器并播放（可选）
+        setTimeout(() => {
+          const videoPlayer = document.getElementById("video-player") as HTMLVideoElement;
+          if (videoPlayer) {
+            videoPlayer.play().catch(err => console.warn("自动播放失败（浏览器策略）:", err));
+          }
+        }, 100);
+      } else {
+        alert(t("videoLoadFailed"));
+        console.error(`【播放失败】未获取到${videoKey}的播放URL`);
+      }
+    } catch (err) {
+      alert(t("videoLoadFailed"));
+      console.error(`【播放异常】${videoKey}:`, err);
+    }
+  };
+
   async function loadVideos(prefix?: string, continuationToken?: string) {
     setLoading(true);
     setError(null);
@@ -76,24 +107,24 @@ export default function VideosClient() {
       params.set("maxKeys", "20");
       params.set("locale", locale); // 多语言过滤参数
 
-      // 【核心修改1】沿用测试成功的fetch地址，正确拼接请求参数，保留无缓存配置
+      // 沿用你测试成功的fetch地址，正确拼接请求参数，保留无缓存配置
       const fetchUrl = `https://gentle-cell-74b9.ygy131419.workers.dev?${params.toString()}`;
       const res = await fetch(fetchUrl, { cache: "no-store" });
       console.log("🔍 发起视频请求：", fetchUrl);
 
-      // 【核心修改2】沿用测试成功的响应校验逻辑，非2xx直接抛错
+      // 沿用你测试成功的响应校验逻辑，非2xx直接抛错
       if (!res.ok) throw new Error(`HTTP错误：${res.status} ${res.statusText}`);
       
       // 解析响应并做类型断言，和原有类型匹配
       const data = { videos: await res.json() } as VideosResponse;
       console.log("📥 原始响应数据：", data);
 
-      // 【核心修改3】严格数据校验，确保videos是数组再处理
+      // 严格数据校验，确保videos是数组再处理
       if (!data || !Array.isArray(data.videos)) {
         throw new Error("返回数据格式错误，videos不是有效数组");
       }
 
-      // 🔥 【唯一核心修改】动态获取多语言封面（zhCover/enCover/其他Cover）
+      // 动态获取多语言封面（zhCover/enCover/其他Cover）
       const videosWithCovers = await Promise.all(
         data.videos.map(async (video) => {
           // 动态拼接当前语言的封面字段：zh -> zhCover，en -> enCover
@@ -129,7 +160,7 @@ export default function VideosClient() {
       setNextToken(data.nextContinuationToken || null);
       setHasMore(data.isTruncated);
     } catch (e) {
-      // 【核心修改4】沿用测试成功的错误处理，统一捕获并设置错误信息
+      // 沿用你测试成功的错误处理，统一捕获并设置错误信息
       const errMsg = e instanceof Error ? e.message : "加载视频出现未知错误";
       console.error("❌ 加载视频失败：", errMsg);
       setError(errMsg);
@@ -185,9 +216,23 @@ export default function VideosClient() {
     });
   }
 
-  // 保留原有所有UI渲染逻辑（未修改）
+  // 保留原有所有UI渲染逻辑，仅修改VideoThumbnail和新增播放器
   return (
     <div className="space-y-4">
+      {/* 【新增3】视频播放器（放在最顶部，点击封面后显示） */}
+      {playVideoUrl && (
+        <div className="rounded-xl overflow-hidden border border-neutral-700">
+          <video
+            id="video-player"
+            src={playVideoUrl}
+            controls
+            autoPlay
+            className="w-full aspect-video"
+            onClose={() => setPlayVideoUrl(null)} // 关闭播放器
+          />
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="flex gap-2">
         <input
@@ -242,7 +287,8 @@ export default function VideosClient() {
                   coverUrl={video.coverUrl}
                   videoUrl={video.videoPreviewUrl}
                   alt={video.title}
-                  className="h-full w-full"
+                  className="h-full w-full cursor-pointer"
+                  onClick={(e) => handleVideoPlay(video.key, e)} {/* 仅修改：加这行点击事件 */}
                 />
               </div>
               <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-neutral-50 group-hover:text-white">
