@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {z} from "zod";
 import {getVideoMetadata, upsertVideoMetadata} from "@/lib/video-metadata/store";
 import {getAdminSessionFromRequest, verifyAdminSession} from "@/lib/admin/auth";
@@ -63,3 +64,4 @@ export async function PUT(req: Request, {params}: {params: Promise<{key: string}
     return Response.json({error: "Update metadata failed", message}, {status: 500});
   }
 }
+
