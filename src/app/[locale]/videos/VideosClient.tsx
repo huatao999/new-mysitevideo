@@ -288,7 +288,7 @@ export default function VideosClient() {
                   videoUrl={video.videoPreviewUrl}
                   alt={video.title}
                   className="h-full w-full cursor-pointer"
-                  onClick={(e) => handleVideoPlay(video.key, e)} {/* 仅修改：加这行点击事件 */}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVideoPlay(video.key, e); }}
                 />
               </div>
               <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-neutral-50 group-hover:text-white">
