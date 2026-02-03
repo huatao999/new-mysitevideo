@@ -81,7 +81,8 @@ export default function VideosClient() {
       if (!res.ok) throw new Error(`HTTP错误：${res.status} ${res.statusText}`);
       
       // 解析响应并做类型断言，和原有类型匹配
-      const data = (await res.json()) as VideosResponse;
+      const data = { videos: await res.json() } as VideosResponse;
+      // const data = (await res.json()) as VideosResponse;
       console.log("📥 原始响应数据：", data);
 
       // 【核心修改3】严格数据校验（和测试成功代码一致），确保videos是数组再处理
