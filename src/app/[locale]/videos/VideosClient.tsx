@@ -14,6 +14,9 @@ type VideoItem = {
   description?: string;
   coverUrl?: string;
   videoPreviewUrl?: string; // 视频文件的预签名 URL（用于生成封面预览）
+  // 新增多语言封面的兼容类型，避免TS报错
+  zhCover?: string;
+  enCover?: string;
 };
 
 type VideosResponse = {
@@ -25,7 +28,7 @@ type VideosResponse = {
 
 export default function VideosClient() {
   const t = useTranslations("videos");
-  const locale = useLocale();
+  const locale = useLocale(); // 当前语言（zh/en/其他）
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,26 +85,32 @@ export default function VideosClient() {
       
       // 解析响应并做类型断言，和原有类型匹配
       const data = { videos: await res.json() } as VideosResponse;
-      // const data = (await res.json()) as VideosResponse;
       console.log("📥 原始响应数据：", data);
 
-      // 【核心修改3】严格数据校验（和测试成功代码一致），确保videos是数组再处理
+      // 【核心修改3】严格数据校验，确保videos是数组再处理
       if (!data || !Array.isArray(data.videos)) {
         throw new Error("返回数据格式错误，videos不是有效数组");
       }
 
-      // 保留原有核心逻辑：加载封面/视频预签名URL（未做任何修改）
+      // 🔥 【唯一核心修改】动态获取多语言封面（zhCover/enCover/其他Cover）
       const videosWithCovers = await Promise.all(
         data.videos.map(async (video) => {
-          if (video.coverUrl) {
-            let coverUrl = video.coverUrl;
+          // 动态拼接当前语言的封面字段：zh -> zhCover，en -> enCover
+          const langCoverKey = `${locale}Cover` as keyof VideoItem;
+          // 优先取当前语言的封面，没有则兜底（可选）
+          const currentLangCover = video[langCoverKey];
+
+          if (currentLangCover) { // 用动态的多语言封面替换固定的coverUrl
+            let coverUrl = currentLangCover;
+            // 原有预签名URL逻辑不变
             if (!coverUrl.startsWith("http://") && !coverUrl.startsWith("https://") && !coverUrl.startsWith("data:")) {
               const presignedCoverUrl = await loadCoverUrl(coverUrl);
               if (presignedCoverUrl) coverUrl = presignedCoverUrl;
               else console.warn(`Failed to load cover URL for ${video.key}`);
             }
-            return { ...video, coverUrl };
+            return { ...video, coverUrl }; // 挂载到coverUrl，让后续组件能识别
           } else {
+            // 原有视频预览逻辑不变（无封面时用视频地址生成预览）
             const videoUrl = await loadVideoUrl(video.key);
             if (!videoUrl) console.warn(`Failed to load video URL for ${video.key}`);
             return { ...video, videoPreviewUrl: videoUrl || undefined };
@@ -175,7 +184,7 @@ export default function VideosClient() {
     });
   }
 
-  // 保留原有所有UI渲染逻辑（搜索框、错误提示、加载状态、视频列表、加载更多）未做任何修改
+  // 保留原有所有UI渲染逻辑（未修改）
   return (
     <div className="space-y-4">
       {/* Search Bar */}
