@@ -16,9 +16,9 @@ export default function VideoList() {
   // 优先级：环境变量 > 硬编码兜底 (方便调试)
   // const API_URL = 'https://jsonplaceholder.typicode.com/todos';
   // const API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || '';
-  console.log('API_URL:', API_URL);
+  
   const API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || 'https://gentle-cell-74b9.ygy131419.workers.dev';
-
+  console.log('API_URL:', API_URL);
   useEffect(() => {
     const fetchVideos = async () => {
       try {
