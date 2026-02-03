@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useLocale } from "next-intl";
-import { useTranslations } from "next-intl";
+// import { useLocale } from "next-intl";
+// import { useTranslations } from "next-intl";
 import VideoThumbnail from "@/components/video/VideoThumbnail";
 
 // 视频项类型定义
@@ -31,8 +31,8 @@ const WORKER_BASE_URL = "https://gentle-cell-74b9.ygy131419.workers.dev";
 
 // 首页默认组件（替换原来的VideoList）
 export default function Home() {
-  const t = useTranslations("videos"); // 复用videos的国际化文案
-  const locale = useLocale(); // 获取当前语言（zh/en）
+  // const t = useTranslations("videos"); // 复用videos的国际化文案
+  // const locale = useLocale(); // 获取当前语言（zh/en）
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
