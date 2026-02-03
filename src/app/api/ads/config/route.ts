@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {getAdConfig, hasAds} from "@/lib/ads/config";
 
 /**
@@ -27,3 +28,4 @@ export async function GET() {
     return Response.json({error: "Get ad config failed", message}, {status: 500});
   }
 }
+
