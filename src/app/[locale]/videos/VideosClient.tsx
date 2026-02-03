@@ -216,7 +216,7 @@ export default function VideosClient() {
     });
   }
 
-  // 保留原有所有UI渲染逻辑，仅修改VideoThumbnail和新增播放器
+  // 保留原有所有UI渲染逻辑，仅修改【事件挂载位置】和新增播放器
   return (
     <div className="space-y-4">
       {/* 【新增3】视频播放器（放在最顶部，点击封面后显示） */}
@@ -228,7 +228,6 @@ export default function VideosClient() {
             controls
             autoPlay
             className="w-full aspect-video"
-            
           />
         </div>
       )}
@@ -282,13 +281,17 @@ export default function VideosClient() {
               href={getVideoUrl(video.key)}
               className="group rounded-xl border border-neutral-800 bg-neutral-900/30 p-4 text-left transition-all hover:border-neutral-700 hover:bg-neutral-900/50 active:bg-neutral-900/60 touch-manipulation"
             >
-              <div className="mb-3 aspect-video w-full overflow-hidden">
+              {/* 核心修改：把onClick移到VideoThumbnail的外层div，组件本身不加任何自定义属性 */}
+              <div 
+                className="mb-3 aspect-video w-full overflow-hidden cursor-pointer"
+                onClick={(e) => handleVideoPlay(video.key, e)}
+              >
                 <VideoThumbnail
                   coverUrl={video.coverUrl}
                   videoUrl={video.videoPreviewUrl}
                   alt={video.title}
-                  className="h-full w-full cursor-pointer"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVideoPlay(video.key, e); }}
+                  className="h-full w-full"
+                  {/* 彻底删掉VideoThumbnail上的onClick，解决类型错误！ */}
                 />
               </div>
               <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-neutral-50 group-hover:text-white">
