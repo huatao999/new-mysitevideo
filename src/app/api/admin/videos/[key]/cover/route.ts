@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {z} from "zod";
 import {PutObjectCommand} from "@aws-sdk/client-s3";
 import {getR2Client} from "@/lib/r2/client";
@@ -89,3 +90,4 @@ export async function POST(req: Request, {params}: {params: Promise<{key: string
     return Response.json({error: "Upload cover failed", message}, {status: 500});
   }
 }
+
