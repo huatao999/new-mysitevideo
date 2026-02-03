@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {z} from "zod";
 import {getLikeCount, hasUserLiked, toggleLike} from "@/lib/video-interactions/store";
 import {getUserIdFromRequest} from "@/lib/video-interactions/user-id";
@@ -65,3 +66,4 @@ export async function POST(req: Request, {params}: {params: Promise<{key: string
     return Response.json({error: "Toggle like failed", message}, {status: 500});
   }
 }
+
