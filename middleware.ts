@@ -1,22 +1,16 @@
-import createMiddleware from "next-intl/middleware";
-import {defaultLocale, locales} from "./src/i18n/locales";
+// next-intl v3.x + Next16 App Router 官方标准middleware
+import createMiddleware from 'next-intl/middleware';
+import config from './next-intl.config.js'; // ES模块必须带.js后缀！
 
-export default createMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: "as-needed",
-});
+// 创建本地化中间件，关联核心配置
+export default createMiddleware(config);
 
+// 配置中间件生效范围：所有根路径+子路径，排除静态资源
 export const config = {
-  // Skip Next internals, static assets, and admin routes
-  // Matcher excludes: /api, /_next, files with extensions, and /admin/*
   matcher: [
-    // Match all pathnames except for:
-    // - /api (API routes)
-    // - /_next (Next.js internals)
-    // - /admin (admin panel - should not have locale prefix)
-    // - Files with extensions (e.g., .png, .jpg, .svg)
-    "/((?!api|_next|admin|.*\\..*).*)",
-  ],
+    '/',
+    '/(zh|en)/:path*',
+    '/_next/:path*',
+    '/api/:path*'
+  ]
 };
-
