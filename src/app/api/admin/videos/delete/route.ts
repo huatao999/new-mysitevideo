@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {DeleteObjectCommand} from "@aws-sdk/client-s3";
 import {z} from "zod";
 import {env} from "@/lib/env";
@@ -54,3 +55,4 @@ export async function DELETE(req: Request) {
     return Response.json({error: "Delete video failed", message}, {status: 500});
   }
 }
+
