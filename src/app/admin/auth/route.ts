@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import {getAdminSessionFromRequest, verifyAdminSession} from "@/lib/admin/auth";
 
 /**
