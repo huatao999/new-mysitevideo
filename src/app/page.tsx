@@ -104,7 +104,8 @@ export default function Home() {
         console.error(`【播放失败】未获取到${videoKey}的有效URL`);
       }
     } catch (err) {
-      alert(t("videoLoadFailed"));
+      alert("videoLoadFailed");
+      // alert(t("videoLoadFailed"));
       console.error(`【播放崩溃】${videoKey}:`, err);
     }
   };
