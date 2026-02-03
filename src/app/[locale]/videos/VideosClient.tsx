@@ -72,8 +72,8 @@ export default function VideosClient() {
       console.log(`【播放响应】状态: ${res.status}`, await res.clone().text());
       if (res.ok) {
         const data = await res.json();
-        console.log(`【播放成功】${videoKey} → ${data.url}`);
-        return data.url;
+        console.log(`【播放成功】${videoKey} → ${data.playUrl}`);
+        return data.playUrl;
       }
     } catch (e) {
       console.error(`【播放异常】获取${videoKey}URL失败:`, e);
