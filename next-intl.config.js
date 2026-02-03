@@ -1,7 +1,13 @@
-// 适配Netlify+Next16，保留中英多语言
+// next-intl v3.x + Next16 App Router + ES模块 官方标准配置
 export default {
-  locales: ["zh", "en"], // 保留多语言，中文+英文
-  defaultLocale: "zh",   // 默认优先渲染中文/zh
-  localePrefix: "as-needed", // 访问/自动跳/zh，不显示多余语言路径
-  runtime: "nodejs"      // 适配Netlify的Node构建环境，避免预渲染报错
+  // 多语言配置（和你原有需求一致）
+  locales: ["zh", "en"],
+  defaultLocale: "zh",
+  // App Router + 预渲染必配：指定运行时，避免Netlify预渲染读取失败
+  runtime: "nodejs",
+  // 保留next-intl的消息文件解析（若你有messages文件夹，无需额外配置）
+  messages: {
+    en: () => import("./messages/en.json").then((m) => m.default),
+    zh: () => import("./messages/zh.json").then((m) => m.default)
+  }
 };
