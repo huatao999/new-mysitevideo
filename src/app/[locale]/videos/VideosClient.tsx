@@ -75,7 +75,8 @@ export default function VideosClient() {
       // 添加语言过滤参数，确保只显示当前语言的视频
       params.set("locale", locale);
 
-      const res = await fetch(`https://gentle-cell-74b9.ygy131419.workers.dev?${params.toString()}`);
+      const res = await fetch(`https://gentle-cell-74b9.ygy131419.workers.dev?${params.toString()}`, {cache: 'no-store'});
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `加载视频列表失败：${res.status}`);
