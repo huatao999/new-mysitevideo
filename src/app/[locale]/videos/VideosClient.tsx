@@ -291,7 +291,7 @@ export default function VideosClient() {
                   videoUrl={video.videoPreviewUrl}
                   alt={video.title}
                   className="h-full w-full"
-                  {/* 彻底删掉VideoThumbnail上的onClick，解决类型错误！ */}
+                  
                 />
               </div>
               <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-neutral-50 group-hover:text-white">
