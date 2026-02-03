@@ -228,7 +228,7 @@ export default function VideosClient() {
             controls
             autoPlay
             className="w-full aspect-video"
-            onClose={() => setPlayVideoUrl(null)} // 关闭播放器
+            
           />
         </div>
       )}
