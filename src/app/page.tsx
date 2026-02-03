@@ -98,7 +98,9 @@ export default function Home() {
           }
         }, 100);
       } else {
-        alert(t("videoLoadFailed"));
+       alert("videoLoadFailed");
+        // 想显示中文也可以，效果一样：alert("视频加载失败");
+        // alert(t("videoLoadFailed"));
         console.error(`【播放失败】未获取到${videoKey}的有效URL`);
       }
     } catch (err) {
