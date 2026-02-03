@@ -53,6 +53,7 @@ export default function VideosClient() {
   // 加载视频文件的预签名 URL（保留原有逻辑，未修改）
   async function loadVideoUrl(videoKey: string): Promise<string | null> {
     try {
+      console.log('【视频播放key参数】:', videoKey);
       const res = await fetch(`/api/videos/presign-play?key=${encodeURIComponent(videoKey)}&expires=3600`);
       if (res.ok) {
         const data = await res.json();
