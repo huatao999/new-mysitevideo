@@ -115,7 +115,7 @@ export default function Home() {
       if (prefix) params.set("prefix", prefix);
       if (continuationToken) params.set("continuationToken", continuationToken);
       params.set("maxKeys", "20");
-      params.set("locale", locale);
+      params.set("locale", "zh");
       const fetchUrl = `${WORKER_BASE_URL}?${params.toString()}`;
       console.log("🔍 发起视频列表请求：", fetchUrl);
       const res = await fetch(fetchUrl, { cache: "no-store" });
@@ -132,7 +132,7 @@ export default function Home() {
       // 批量处理封面URL
       const videosWithCovers = await Promise.all(
         data.videos.map(async (video) => {
-          const langCoverKey = `${locale}Cover` as keyof VideoItem;
+          const langCoverKey = 'zhCover' as keyof VideoItem;
           const currentLangCover = video[langCoverKey];
           if (currentLangCover) {
             let coverUrl = currentLangCover as string;
@@ -171,7 +171,7 @@ export default function Home() {
   useEffect(() => {
     loadVideos();
     console.log("🔄 组件挂载/语言切换，重新加载视频");
-  }, [locale]);
+  }, []);
 
   // 搜索按钮点击/回车处理
   function handleSearch() {
@@ -191,7 +191,7 @@ export default function Home() {
 
   // 生成视频详情页链接
   function getVideoUrl(videoKey: string): string {
-    return `/${locale}/videos/${encodeURIComponent(videoKey)}`;
+    return `/zh/videos/${encodeURIComponent(videoKey)}`;
   }
 
   // 格式化文件大小（B/KB/MB/GB）
