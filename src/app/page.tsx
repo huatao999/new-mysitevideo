@@ -32,7 +32,6 @@ const WORKER_BASE_URL = "https://gentle-cell-74b9.ygy131419.workers.dev";
 
 // 首页默认组件
 export default function Home() {
-  const locale = useLocale(); // 获取当前语言（zh/en）
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
