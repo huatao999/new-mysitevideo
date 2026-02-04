@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
-import { useTranslations } from "next-intl";
 
 // 注释：如果VideoThumbnail组件在 @/components/video/ 下，解开下面这行注释即可
 import VideoThumbnail from "@/components/video/VideoThumbnail";
@@ -33,7 +32,6 @@ const WORKER_BASE_URL = "https://gentle-cell-74b9.ygy131419.workers.dev";
 
 // 首页默认组件
 export default function Home() {
-  const t = useTranslations("videos"); // 复用videos的国际化文案
   const locale = useLocale(); // 获取当前语言（zh/en）
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,21 +233,25 @@ export default function Home() {
   // 页面渲染
   return (
     <div className="container mx-auto p-5 space-y-4">
-      {/* 视频播放器 */}
+      {/* 视频播放器 - 核心修复：onClose → onClick，普通div支持的原生属性 */}
       {playVideoUrl && (
-        <div className="rounded-xl overflow-hidden border border-neutral-700">
+        <div 
+          className="rounded-xl overflow-hidden border border-neutral-700 cursor-pointer" 
+          onClick={() => setPlayVideoUrl(null)}
+        >
           <video
             id="video-player"
             src={playVideoUrl}
             controls
             autoPlay
             className="w-full aspect-video"
-            onClose={() => setPlayVideoUrl(null)}
+            // 阻止点击视频本身时触发关闭（只点外层div关闭）
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
 
-      {/* 搜索框 */}
+      {/* 搜索框 - 已移除所有t函数 */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -268,7 +270,7 @@ export default function Home() {
           disabled={loading}
           className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-black disabled:opacity-50 touch-manipulation min-h-[44px] min-w-[80px] active:bg-neutral-200 transition-colors"
         >
-          {"搜索"}
+          搜索
         </button>
       </div>
 
@@ -279,18 +281,17 @@ export default function Home() {
         </div>
       )}
 
-      {/* 加载中 */}
+      {/* 加载中 - 已移除t函数 */}
       {loading && videos.length === 0 && (
         <div className="flex items-center justify-center py-12">
           <div className="text-sm text-neutral-400">加载中...</div>
         </div>
       )}
 
-      {/* 无视频提示 */}
+      {/* 无视频提示 - 已移除t函数 */}
       {!loading && videos.length === 0 && !error && (
         <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-8 text-center">
           <p className="text-sm text-neutral-400">暂无视频数据</p>
-
         </div>
       )}
 
