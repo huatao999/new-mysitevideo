@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useLocale } from "next-intl";
 
 // 注释：如果VideoThumbnail组件在 @/components/video/ 下，解开下面这行注释即可
 import VideoThumbnail from "@/components/video/VideoThumbnail";
