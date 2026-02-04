@@ -7,7 +7,6 @@ interface Video {
   zhCover?: string;
   enCover?: string;
 }
-
 export default function VideoList() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
