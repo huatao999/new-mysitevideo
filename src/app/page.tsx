@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import { useTranslations } from "next-intl";
 
 // 注释：如果VideoThumbnail组件在 @/components/video/ 下，解开下面这行注释即可
-// import VideoThumbnail from "@/components/video/VideoThumbnail";
+import VideoThumbnail from "@/components/video/VideoThumbnail";
 
 // 视频项类型定义
 type VideoItem = {
