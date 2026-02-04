@@ -100,11 +100,11 @@ export default function Home() {
           }
         }, 100);
       } else {
-        alert(t("videoLoadFailed"));
+        alert("视频加载失败");
         console.error(`【播放失败】未获取到${videoKey}的有效URL`);
       }
     } catch (err) {
-      alert(t("videoLoadFailed"));
+      alert("视频加载失败");
       console.error(`【播放崩溃】${videoKey}:`, err);
     }
   };
@@ -226,7 +226,7 @@ export default function Home() {
     if (coverUrl) {
       return <img src={coverUrl} alt={alt} className={className} loading="lazy" />;
     } else if (videoUrl) {
-      return <video src={videoUrl} alt={alt} className={className} muted loop playsInline />;
+      return <video src={videoUrl} className={className} muted loop playsInline />;
     } else {
       return <div className={`${className} bg-neutral-800 flex items-center justify-center text-neutral-500`}>{alt}</div>;
     }
@@ -260,7 +260,7 @@ export default function Home() {
               handleSearch();
             }
           }}
-          placeholder={t("searchPlaceholder") || "搜索视频标题..."}
+          placeholder="搜索视频标题..."
           className="flex-1 rounded-md border border-neutral-700 bg-neutral-950 px-3 py-3 text-sm text-neutral-50 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none touch-manipulation min-h-[44px]"
         />
         <button
@@ -268,7 +268,7 @@ export default function Home() {
           disabled={loading}
           className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-black disabled:opacity-50 touch-manipulation min-h-[44px] min-w-[80px] active:bg-neutral-200 transition-colors"
         >
-          {t("search") || "搜索"}
+          {"搜索"}
         </button>
       </div>
 
@@ -282,14 +282,15 @@ export default function Home() {
       {/* 加载中 */}
       {loading && videos.length === 0 && (
         <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-neutral-400">{t("loading") || "加载中..."}</div>
+          <div className="text-sm text-neutral-400">加载中...</div>
         </div>
       )}
 
       {/* 无视频提示 */}
       {!loading && videos.length === 0 && !error && (
         <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-8 text-center">
-          <p className="text-sm text-neutral-400">{t("noVideos") || "暂无视频数据"}</p>
+          <p className="text-sm text-neutral-400">暂无视频数据</p>
+
         </div>
       )}
 
@@ -343,7 +344,7 @@ export default function Home() {
             disabled={loading || !nextToken}
             className="rounded-md border border-neutral-700 bg-neutral-900/50 px-6 py-3 text-sm text-neutral-300 transition-colors hover:bg-neutral-900 active:bg-neutral-800 disabled:opacity-50 touch-manipulation min-h-[44px]"
           >
-            {loading ? (t("loading") || "加载中...") : (t("loadMore") || "加载更多")}
+            {loading ? "加载中..." : "加载更多"}            
           </button>
         </div>
       )}
