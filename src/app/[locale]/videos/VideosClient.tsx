@@ -2,8 +2,9 @@
 
 import {useEffect, useState} from "react";
 import Link from "next/link";
-import {useLocale} from "next-intl";
-import {useTranslations} from "next-intl";
+// 【1. 注释所有多语言导入】保留其他核心导入，不动VideoThumbnail
+// import {useLocale} from "next-intl";
+// import {useTranslations} from "next-intl";
 import VideoThumbnail from "@/components/video/VideoThumbnail";
 
 type VideoItem = {
@@ -24,8 +25,11 @@ type VideosResponse = {
 };
 
 export default function VideosClient() {
-  const t = useTranslations("videos");
-  const locale = useLocale();
+  // 【2. 注释多语言翻译函数】删掉t的定义
+  // const t = useTranslations("videos");
+  // 【3. 替换locale】固定为zh，适配原有接口参数，不影响视频加载
+  // const locale = useLocale();
+  const locale = "zh";
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export default function VideosClient() {
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
 
-  // 加载封面图片的预签名 URL
+  // 加载封面图片的预签名 URL 【完全保留】不动核心逻辑
   async function loadCoverUrl(coverKey: string): Promise<string | null> {
     try {
       const res = await fetch(`/api/videos/presign-play?key=${encodeURIComponent(coverKey)}&expires=3600`);
@@ -48,7 +52,7 @@ export default function VideosClient() {
     return null;
   }
 
-  // 加载视频文件的预签名 URL（用于生成封面预览）
+  // 加载视频文件的预签名 URL（用于生成封面预览）【完全保留】
   async function loadVideoUrl(videoKey: string): Promise<string | null> {
     try {
       const res = await fetch(`/api/videos/presign-play?key=${encodeURIComponent(videoKey)}&expires=3600`);
@@ -72,7 +76,7 @@ export default function VideosClient() {
       if (prefix) params.set("prefix", prefix);
       if (continuationToken) params.set("continuationToken", continuationToken);
       params.set("maxKeys", "20");
-      // 添加语言过滤参数，确保只显示当前语言的视频
+      // 【参数保留】locale已固定为zh，接口过滤逻辑不变，完全保留
       params.set("locale", locale);
 
       const res = await fetch(`/api/videos/list?${params.toString()}`);
@@ -83,15 +87,12 @@ export default function VideosClient() {
 
       const data = (await res.json()) as VideosResponse;
       
-      // 加载封面图片或视频文件的预签名 URL
+      // 加载封面/视频预览预签名 URL 【完全保留】核心逻辑不动
       const videosWithCovers = await Promise.all(
         data.videos.map(async (video) => {
           if (video.coverUrl) {
-            // 如果有封面 URL（可能是 R2 key），加载封面的预签名 URL
-            // coverUrl 可能是完整的 URL 或者是 R2 key
             let coverUrl = video.coverUrl;
             if (!coverUrl.startsWith("http://") && !coverUrl.startsWith("https://") && !coverUrl.startsWith("data:")) {
-              // 如果是 R2 key，需要获取预签名 URL
               const presignedCoverUrl = await loadCoverUrl(coverUrl);
               if (presignedCoverUrl) {
                 coverUrl = presignedCoverUrl;
@@ -102,7 +103,6 @@ export default function VideosClient() {
             }
             return {...video, coverUrl};
           } else {
-            // 如果没有封面，使用视频文件本身作为预览
             const videoUrl = await loadVideoUrl(video.key);
             if (!videoUrl) {
               // eslint-disable-next-line no-console
@@ -114,10 +114,8 @@ export default function VideosClient() {
       );
       
       if (continuationToken) {
-        // Append to existing videos (pagination)
         setVideos((prev) => [...prev, ...videosWithCovers]);
       } else {
-        // Replace videos (new search)
         setVideos(videosWithCovers);
       }
       setNextToken(data.nextContinuationToken || null);
@@ -129,30 +127,34 @@ export default function VideosClient() {
     }
   }
 
+  // 【保留依赖】locale固定为zh，不影响useEffect执行，完全保留原有加载逻辑
   useEffect(() => {
     loadVideos();
   }, [locale]);
 
+  // 搜索逻辑 【完全保留】不动搜索、分页核心交互
   function handleSearch() {
-    if (loading) return; // Prevent search while loading
+    if (loading) return;
     const prefix = searchQuery.trim() || undefined;
     setNextToken(null);
     setHasMore(false);
-    setError(null); // Clear previous errors
+    setError(null);
     loadVideos(prefix);
   }
 
+  // 加载更多逻辑 【完全保留】
   function handleLoadMore() {
     if (nextToken && !loading) {
       loadVideos(searchQuery.trim() || undefined, nextToken);
     }
   }
 
-  // Generate video detail URL with locale
+  // 视频详情路由 【保留格式】locale固定为zh，路由链接逻辑不变
   function getVideoUrl(videoKey: string): string {
     return `/${locale}/videos/${encodeURIComponent(videoKey)}`;
   }
 
+  // 文件大小格式化 【完全保留】
   function formatFileSize(bytes: number): string {
     if (bytes === 0) return "0 B";
     const k = 1024;
@@ -161,6 +163,7 @@ export default function VideosClient() {
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   }
 
+  // 日期格式化 【完全保留】已适配中文zh-CN，不用改
   function formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString("zh-CN", {
@@ -172,7 +175,7 @@ export default function VideosClient() {
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
+      {/* Search Bar 搜索框 【仅替换占位符/按钮文字】保留所有样式/交互 */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -183,7 +186,7 @@ export default function VideosClient() {
               handleSearch();
             }
           }}
-          placeholder={t("searchPlaceholder")}
+          placeholder="搜索视频名称..." // 替换t("searchPlaceholder")
           className="flex-1 rounded-md border border-neutral-700 bg-neutral-950 px-3 py-3 text-sm text-neutral-50 placeholder:text-neutral-500 focus:border-neutral-500 focus:outline-none touch-manipulation min-h-[44px]"
         />
         <button
@@ -191,27 +194,28 @@ export default function VideosClient() {
           disabled={loading}
           className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-black disabled:opacity-50 touch-manipulation min-h-[44px] min-w-[80px] active:bg-neutral-200 transition-colors"
         >
-          {t("search")}
+          搜索 // 替换t("search")
         </button>
       </div>
 
-      {/* Error Message */}
+      {/* Error Message 错误提示 【完全保留】样式/逻辑不动 */}
       {error && <div className="rounded-md bg-red-900/20 border border-red-800 px-4 py-3 text-sm text-red-300">{error}</div>}
 
-      {/* Loading State */}
+      {/* Loading State 加载中 【仅替换文字】保留样式/布局 */}
       {loading && videos.length === 0 && (
         <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-neutral-400">{t("loading")}</div>
+          <div className="text-sm text-neutral-400">加载中...</div> // 替换t("loading")
         </div>
       )}
 
-      {/* Video List */}
+      {/* Video List 空数据提示 【仅替换文字】保留样式/布局 */}
       {!loading && videos.length === 0 && !error && (
         <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-8 text-center">
-          <p className="text-sm text-neutral-400">{t("noVideos")}</p>
+          <p className="text-sm text-neutral-400">暂无相关视频</p> // 替换t("noVideos")
         </div>
       )}
 
+      {/* 视频列表核心渲染 【完全保留】所有样式/VideoThumbnail/hover/布局全不动 */}
       {videos.length > 0 && (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => (
@@ -240,7 +244,7 @@ export default function VideosClient() {
         </div>
       )}
 
-      {/* Load More Button */}
+      {/* Load More Button 加载更多 【仅替换文字】保留样式/禁用逻辑 */}
       {hasMore && videos.length > 0 && (
         <div className="flex justify-center pt-4">
           <button
@@ -248,7 +252,7 @@ export default function VideosClient() {
             disabled={loading || !nextToken}
             className="rounded-md border border-neutral-700 bg-neutral-900/50 px-6 py-3 text-sm text-neutral-300 transition-colors hover:bg-neutral-900 active:bg-neutral-800 disabled:opacity-50 touch-manipulation min-h-[44px]"
           >
-            {loading ? t("loading") : t("loadMore")}
+            {loading ? "加载中..." : "加载更多"} // 替换t("loading")/t("loadMore")
           </button>
         </div>
       )}
