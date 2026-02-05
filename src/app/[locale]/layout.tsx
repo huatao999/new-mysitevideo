@@ -1,53 +1,34 @@
-import {NextIntlClientProvider} from "next-intl";
-import {getMessages, setRequestLocale} from "next-intl/server";
-import {defaultLocale, locales, type Locale} from "@/i18n/locales";
-import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+// 删掉所有next-intl、i18n相关导入，只保留必要的布局组件
 import Navigation from "@/components/layout/Navigation";
 import SiteLogo from "@/components/layout/SiteLogo";
 
-function isLocale(value: string): value is Locale {
-  return (locales as readonly string[]).includes(value);
-}
+// 直接删掉多语言的校验函数、generateStaticParams（没用了）
 
-export function generateStaticParams() {
-  return locales.map((locale) => ({locale}));
-}
-
-export default async function LocaleLayout({
+// 简化组件参数，删掉多语言相关的Promise<{locale: string}>，直接传普通params
+export default function LocaleLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{locale: string}>;
+  params?: { locale?: string }; // 留个可选参数，避免组件传参报错
 }) {
-  const {locale: rawLocale} = await params;
-  const locale = isLocale(rawLocale) ? rawLocale : defaultLocale;
-
-  // Ensure server components (useTranslations) use the active locale
-  setRequestLocale(locale);
-
-  const messages = await getMessages({locale});
-
-  // RTL languages: Arabic
-  const isRTL = locale === "ar";
-  const dir = isRTL ? "rtl" : "ltr";
+  // 删掉所有多语言locale判断、setRequestLocale、getMessages、RTL这些逻辑
+  // 直接固定文字方向ltr（中文默认），不用再判断locale
+  const dir = "ltr";
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="min-h-dvh bg-neutral-950 text-neutral-50" dir={dir}>
-        <header className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3 sm:gap-6">
-            <SiteLogo />
-            <Navigation />
-          </div>
-          <LanguageSwitcher currentLocale={locale} />
-        </header>
-        <main className="mx-auto max-w-5xl px-4 pb-10">{children}</main>
-        <footer className="mx-auto max-w-5xl px-4 py-8 text-xs text-neutral-400">
-          © {new Date().getFullYear()} My Video Site
-        </footer>
-      </div>
-    </NextIntlClientProvider>
+    // 删掉NextIntlClientProvider包裹（多语言核心容器，现在没用了）
+    <div className="min-h-dvh bg-neutral-950 text-neutral-50" dir={dir}>
+      <header className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <SiteLogo />
+          <Navigation />
+        </div>
+        {/* 删掉LanguageSwitcher（多语言切换组件，依赖i18n，留着会报错） */}
+      </header>
+      <main className="mx-auto max-w-5xl px-4 pb-10">{children}</main>
+      <footer className="mx-auto max-w-5xl px-4 py-8 text-xs text-neutral-400">
+        © {new Date().getFullYear()} My Video Site
+      </footer>
+    </div>
   );
 }
-
