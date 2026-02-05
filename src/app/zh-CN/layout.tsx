@@ -2,11 +2,6 @@
 import Navigation from "@/components/layout/Navigation";
 import SiteLogo from "@/components/layout/SiteLogo";
 
-// 解决动态路由类型约束的核心：声明generateStaticParams（原代码已加，保留）
-export async function generateStaticParams() {
-  return [{ locale: "zh-CN" }];
-}
-
 // 关键修复：给React.ReactNode加显式类型声明，消除Next.js严格类型校验的隐性报错
 export default function LocaleLayout({
   children,
