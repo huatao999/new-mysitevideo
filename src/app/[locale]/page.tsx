@@ -9,8 +9,9 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">{"首页"}</h1>
-        <p className="text-sm text-neutral-300">{"视频列表")}</p>
+        <h1 className="text-2xl font-semibold">首页</h1>
+        <p className="text-sm text-neutral-300">视频列表</p>
+
       </div>
 
       {/* 广告状态显示 */}
