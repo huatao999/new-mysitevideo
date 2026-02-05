@@ -97,3 +97,4 @@ export default function VideoDetailClient({videoKey}: {videoKey: string}) {
     </div>
   );
 }
+
