@@ -1,5 +1,6 @@
 // 【1. 注释多语言导入】只动这一行，保留VideosClient导入
 // import {useTranslations} from "next-intl";
+export const dynamic = "force-dynamic";
 import VideosClient from "./VideosClient";
 
 export default function VideosPage() {
@@ -19,3 +20,4 @@ export default function VideosPage() {
     </div>
   );
 }
+
