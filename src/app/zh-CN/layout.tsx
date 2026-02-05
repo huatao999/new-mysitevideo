@@ -5,10 +5,8 @@ import SiteLogo from "@/components/layout/SiteLogo";
 // 关键修复：给React.ReactNode加显式类型声明，消除Next.js严格类型校验的隐性报错
 export default function LocaleLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
 }) {
   const dir = "ltr"; // 中文固定方向（原代码未动）
 
