@@ -1,7 +1,8 @@
 "use client";
 
 import {useEffect, useState} from "react";
-import {useLocale} from "next-intl";
+// 【仅注释多语言导入】保留其他所有导入，不动VideoPlayer/Link这些核心组件
+// import {useLocale} from "next-intl";
 import Link from "next/link";
 import VideoPlayer from "@/components/video/VideoPlayer";
 
@@ -22,7 +23,9 @@ type VideosResponse = {
 };
 
 export default function HomeClient() {
-  const locale = useLocale();
+  // 【替换多语言获取】删掉useLocale调用，固定locale为zh（适配原有接口/路由的参数格式，不影响功能）
+  // const locale = useLocale();
+  const locale = "zh";
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +34,7 @@ export default function HomeClient() {
   const [playLoading, setPlayLoading] = useState(false);
   const [playError, setPlayError] = useState<string | null>(null);
 
+  // 【保留原有依赖】locale已固定为zh，依赖项不变，不影响useEffect执行逻辑
   useEffect(() => {
     loadVideos();
   }, [locale]);
@@ -40,6 +44,7 @@ export default function HomeClient() {
     setError(null);
 
     try {
+      // 【参数不变】locale是固定的zh，接口请求参数格式保留，不影响视频列表加载
       const res = await fetch(`/api/videos/list?locale=${locale}&maxKeys=20`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -48,7 +53,7 @@ export default function HomeClient() {
 
       const data = (await res.json()) as VideosResponse;
       
-      // 加载封面图片的预签名 URL
+      // 加载封面图片的预签名 URL 【完全保留】不动封面加载逻辑
       const videosWithCovers = await Promise.all(
         data.videos.map(async (video) => {
           if (video.coverUrl) {
@@ -77,6 +82,7 @@ export default function HomeClient() {
     }
   }
 
+  // 视频播放逻辑 【完全保留】不动播放、预签名URL获取逻辑
   async function handlePlay() {
     if (!videoKey.trim()) return;
 
@@ -101,7 +107,7 @@ export default function HomeClient() {
 
   return (
     <div className="space-y-6">
-      {/* Video List */}
+      {/* Video List 视频列表 【完全保留】布局、样式、循环渲染逻辑全不动 */}
       {loading && videos.length === 0 && (
         <div className="flex items-center justify-center py-12">
           <div className="text-sm text-neutral-400">加载中...</div>
@@ -125,10 +131,11 @@ export default function HomeClient() {
           {videos.map((video) => (
             <Link
               key={video.key}
+              // 【路由参数不变】locale是固定的zh，路由链接格式保留，不影响菜单/跳转逻辑
               href={`/${locale}/videos/${encodeURIComponent(video.key)}`}
               className="group rounded-xl border border-neutral-800 bg-neutral-900/30 overflow-hidden transition-all hover:border-neutral-700 hover:bg-neutral-900/50 active:bg-neutral-900/60 touch-manipulation"
             >
-              {/* Cover Image */}
+              {/* Cover Image 封面图 【完全保留】加载、占位符、hover效果全不动 */}
               <div className="aspect-video w-full overflow-hidden bg-neutral-950">
                 {video.coverUrl ? (
                   <img
@@ -136,7 +143,6 @@ export default function HomeClient() {
                     alt={video.title}
                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     onError={(e) => {
-                      // 如果图片加载失败，显示占位符
                       (e.target as HTMLImageElement).style.display = "none";
                       const parent = (e.target as HTMLImageElement).parentElement;
                       if (parent) {
@@ -159,7 +165,7 @@ export default function HomeClient() {
                 )}
               </div>
 
-              {/* Content */}
+              {/* Content 视频标题/描述 【完全保留】样式、截断逻辑全不动 */}
               <div className="p-4">
                 <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-neutral-50 group-hover:text-white">
                   {video.title}
@@ -173,7 +179,7 @@ export default function HomeClient() {
         </div>
       )}
 
-      {/* Video Playback Test (Keep for testing) */}
+      {/* Video Playback Test 播放测试模块 【完全保留】输入框、按钮、交互全不动 */}
       <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-4">
         <div className="mb-2 text-sm font-semibold">视频播放测试</div>
         <p className="mb-3 text-xs text-neutral-400">
@@ -206,6 +212,7 @@ export default function HomeClient() {
         </div>
       </div>
 
+      {/* VideoPlayer 播放器组件 【完全保留】调用逻辑、参数全不动 */}
       {playUrl && (
         <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3">
           <div className="mb-2 text-xs text-neutral-300">R2 播放（预签名 URL）</div>
@@ -215,4 +222,3 @@ export default function HomeClient() {
     </div>
   );
 }
-
