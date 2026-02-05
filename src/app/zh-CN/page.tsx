@@ -1,4 +1,5 @@
 // import {useTranslations} from "next-intl";
+export const dynamic = "force-dynamic";
 import HomeClient from "./HomeClient";
 import AdStatus from "@/components/ads/AdStatus";
 import {Suspense} from "react";
